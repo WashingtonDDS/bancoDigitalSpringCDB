@@ -1,4 +1,4 @@
-package br.com.cdb.bancoDigitalCdb.service.security;
+package br.com.cdb.bancoDigitalCdb.security;
 
 import br.com.cdb.bancoDigitalCdb.entity.Cliente;
 import br.com.cdb.bancoDigitalCdb.repository.ClienteRepository;

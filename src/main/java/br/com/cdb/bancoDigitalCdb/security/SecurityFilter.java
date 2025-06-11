@@ -1,4 +1,4 @@
-package br.com.cdb.bancoDigitalCdb.service.security;
+package br.com.cdb.bancoDigitalCdb.security;
 import br.com.cdb.bancoDigitalCdb.entity.Cliente;
 import br.com.cdb.bancoDigitalCdb.repository.ClienteRepository;
 import jakarta.servlet.FilterChain;
@@ -30,7 +30,7 @@ public class SecurityFilter extends OncePerRequestFilter {
         if(login != null){
             Cliente cliente = clienteRepository.findByEmail(login).orElseThrow(() -> new RuntimeException("User Not Found"));
             var authorities = Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"));
-            var authentication = new UsernamePasswordAuthenticationToken(cliente, null, authorities);
+            var authentication = new UsernamePasswordAuthenticationToken(cliente, null, cliente.getAuthorities());
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }
         filterChain.doFilter(request, response);

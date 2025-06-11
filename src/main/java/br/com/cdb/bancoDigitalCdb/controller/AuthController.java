@@ -5,7 +5,7 @@ import br.com.cdb.bancoDigitalCdb.dto.RegisterRequestDTO;
 import br.com.cdb.bancoDigitalCdb.dto.ResponseDTO;
 import br.com.cdb.bancoDigitalCdb.entity.Cliente;
 import br.com.cdb.bancoDigitalCdb.repository.ClienteRepository;
-import br.com.cdb.bancoDigitalCdb.service.security.TokenService;
+import br.com.cdb.bancoDigitalCdb.security.TokenService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -23,15 +23,7 @@ public class AuthController {
     private final PasswordEncoder passwordEncoder;
     private final TokenService tokenService;
 
-    @PostMapping("/login")
-    public ResponseEntity login (@RequestBody LoginRequestDTO body ){
-        Cliente cliente = this.clienteRepository.findByEmail(body.email()).orElseThrow(()-> new RuntimeException("User not found") );
-        if (passwordEncoder.matches(body.password(), cliente.getPassword())){
-            String token = this.tokenService.generateToken(cliente);
-            return ResponseEntity.ok(new ResponseDTO(cliente.getName(),token));
-        }
-        return ResponseEntity.badRequest().build();
-    }
+
     @PostMapping("/register")
     public ResponseEntity register (@RequestBody RegisterRequestDTO body ){
         Optional<Cliente> cliente = this.clienteRepository.findByEmail(body.email());
@@ -45,6 +37,15 @@ public class AuthController {
             String token = this.tokenService.generateToken(newCliente);
             return ResponseEntity.ok(new ResponseDTO(newCliente.getName(),token));
 
+        }
+        return ResponseEntity.badRequest().build();
+    }
+    @PostMapping("/login")
+    public ResponseEntity login (@RequestBody LoginRequestDTO body ){
+        Cliente cliente = this.clienteRepository.findByEmail(body.email()).orElseThrow(()-> new RuntimeException("User not found") );
+        if (passwordEncoder.matches(body.password(), cliente.getPassword())){
+            String token = this.tokenService.generateToken(cliente);
+            return ResponseEntity.ok(new ResponseDTO(cliente.getName(),token));
         }
         return ResponseEntity.badRequest().build();
     }

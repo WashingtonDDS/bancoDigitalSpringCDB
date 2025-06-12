@@ -1,4 +1,4 @@
-package br.com.cdb.bancoDigitalCdb.doc;
+package br.com.cdb.bancoDigitalCdb.config;
 
 
 import io.swagger.v3.oas.models.OpenAPI;
@@ -14,7 +14,7 @@ public class OpenAPIConfig {
     public OpenAPI customOpenAPI() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("Bando Digital Codigo de Base")
+                        .title("Banco Digital Codigo de Base")
                         .version("v1.0")
                         .description("Documentação da minha API usando Springdoc OpenAPI")
                         .contact(new Contact()

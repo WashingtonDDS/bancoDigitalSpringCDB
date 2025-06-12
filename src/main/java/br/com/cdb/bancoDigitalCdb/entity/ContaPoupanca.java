@@ -1,12 +1,25 @@
 package br.com.cdb.bancoDigitalCdb.entity;
 
-public class ContaPoupanca implements ContaBancaria{
+
+import jakarta.persistence.Entity;
+import lombok.*;
+
+@Entity
+@NoArgsConstructor
+@AllArgsConstructor
+@Getter
+@Setter
+@Builder
+public class ContaPoupanca {
 
     private Cliente cliente;
-    private long numeroDaConta;
-    private double saldo;
-    private double rendimento;
-    private CartaoDeDebito cartaoDeDebito;
 
+    private long numeroDaConta;
+
+    private double saldo;
+
+    private double rendimento;
+
+    private CartaoDeDebito cartaoDeDebito;
 
 }

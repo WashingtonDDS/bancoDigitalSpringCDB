@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class ClienteController {
 
     @GetMapping
-    public ResponseEntity<String>getUser(){
+    public ResponseEntity<String>getCliente(){
         return ResponseEntity.ok("Sucesso");
     }
 }

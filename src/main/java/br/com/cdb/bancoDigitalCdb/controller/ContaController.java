@@ -15,9 +15,9 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/conta")
 @RequiredArgsConstructor
-public class AuthController {
+public class ContaController {
 
     private final ClienteRepository clienteRepository;
     private final PasswordEncoder passwordEncoder;
@@ -32,6 +32,11 @@ public class AuthController {
             newCliente.setPassword(passwordEncoder.encode(body.password()));
             newCliente.setEmail(body.email());
             newCliente.setName(body.name());
+            newCliente.setCpf(body.cpf());
+            newCliente.setDataDeNascimento(body.dataDeNascimento());
+            newCliente.setEndereco(body.endereco());
+            newCliente.setTipoCliente(body.tipoCliente());
+            newCliente.setRole(body.role());
             this.clienteRepository.save(newCliente);
 
             String token = this.tokenService.generateToken(newCliente);
@@ -49,7 +54,7 @@ public class AuthController {
         }
         return ResponseEntity.badRequest().build();
     }
-    @GetMapping("/clientess")
+    @GetMapping("/contas")
     public List<Cliente> getAllClientes() {
         return clienteRepository.findAll();
     }

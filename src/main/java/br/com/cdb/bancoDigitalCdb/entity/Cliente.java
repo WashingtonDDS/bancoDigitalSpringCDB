@@ -38,6 +38,8 @@ public class Cliente implements UserDetails {
 
     private TipoCliente tipoCliente;
 
+    private TipoDeConta tipoDeConta;
+
     private ClienteRole role;
 
     @Override

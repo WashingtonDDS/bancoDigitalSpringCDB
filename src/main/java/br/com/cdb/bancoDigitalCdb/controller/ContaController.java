@@ -4,7 +4,10 @@ import br.com.cdb.bancoDigitalCdb.dto.LoginRequestDTO;
 import br.com.cdb.bancoDigitalCdb.dto.RegisterRequestDTO;
 import br.com.cdb.bancoDigitalCdb.dto.ResponseDTO;
 import br.com.cdb.bancoDigitalCdb.entity.Cliente;
+import br.com.cdb.bancoDigitalCdb.entity.ContaCorrente;
+import br.com.cdb.bancoDigitalCdb.entity.TipoDeConta;
 import br.com.cdb.bancoDigitalCdb.repository.ClienteRepository;
+import br.com.cdb.bancoDigitalCdb.repository.ContaCorrenteRepository;
 import br.com.cdb.bancoDigitalCdb.security.TokenService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +23,7 @@ import java.util.Optional;
 public class ContaController {
 
     private final ClienteRepository clienteRepository;
+    private final ContaCorrenteRepository contaCorrenteRepository;
     private final PasswordEncoder passwordEncoder;
     private final TokenService tokenService;
 
@@ -36,8 +40,19 @@ public class ContaController {
             newCliente.setDataDeNascimento(body.dataDeNascimento());
             newCliente.setEndereco(body.endereco());
             newCliente.setTipoCliente(body.tipoCliente());
+            newCliente.setTipoDeConta(body.tipoDeConta());
             newCliente.setRole(body.role());
-            this.clienteRepository.save(newCliente);
+            Cliente salvaCliente = this.clienteRepository.save(newCliente);
+
+            if (body.tipoDeConta() == TipoDeConta.CORRENTE){
+                ContaCorrente contaCorrente = ContaCorrente.builder()
+                        .cliente(salvaCliente)
+                        .numeroDaConta(gerarNumeroDaConta())
+                        .saldo(0.0)
+                        .taxaDeManutencao(aplicarTaxaDeManutencao())
+                        .build();
+                contaCorrenteRepository.save(contaCorrente);
+            }
 
             String token = this.tokenService.generateToken(newCliente);
             return ResponseEntity.ok(new ResponseDTO(newCliente.getName(),token));

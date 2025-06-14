@@ -7,7 +7,6 @@ import br.com.cdb.bancoDigitalCdb.entity.EsqueciMinhaSenha;
 import br.com.cdb.bancoDigitalCdb.handler.CampoObrigatorioException;
 import br.com.cdb.bancoDigitalCdb.repository.ClienteRepository;
 import br.com.cdb.bancoDigitalCdb.repository.EsqueciMinhaSenhaRepository;
-import br.com.cdb.bancoDigitalCdb.security.SecurityConfig;
 import br.com.cdb.bancoDigitalCdb.service.EmailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -66,7 +65,7 @@ public class EsqueciMinhaSenhaController {
     public ResponseEntity<String>verificarOPT(@PathVariable Integer otp, @PathVariable String email){
         Cliente cliente = clienteRepository.findByEmail(email).orElseThrow(()-> new CampoObrigatorioException(email));
        EsqueciMinhaSenha esqueciMinhaSenha = esqueciMinhaSenhaRepository
-               .findByOtpCliente(otp, cliente).orElseThrow(()->new  RuntimeException("OTP para email: "+ email));
+               .findByOtpAndCliente(otp, cliente).orElseThrow(()->new  RuntimeException("OTP para email: "+ email));
        if (esqueciMinhaSenha.getExpirationTime().before(Date.from(Instant.now()))){
            esqueciMinhaSenhaRepository.deleteById(esqueciMinhaSenha.getId());
            return new ResponseEntity<>("OTP expirado!", HttpStatus.EXPECTATION_FAILED);

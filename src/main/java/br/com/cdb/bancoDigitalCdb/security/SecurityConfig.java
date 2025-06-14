@@ -30,38 +30,58 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers(HttpMethod.POST, "/clientes").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/clientes/{id}").hasRole("USER")
-                        .requestMatchers(HttpMethod.PUT, "/clientes/{id}").hasRole("USER")
-                        .requestMatchers(HttpMethod.DELETE,"/clientes/{id}").hasRole("USER")
-                        .requestMatchers(HttpMethod.GET, "/clientes").hasRole("USER")
+                        .requestMatchers("/h2-console/**").permitAll()
+                        .requestMatchers(
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/swagger-resources/**",
+                                "/webjars/**"
+                        ).permitAll()
 
-                        .requestMatchers(HttpMethod.POST, "/contas").hasRole("ADMIM")
-                        .requestMatchers(HttpMethod.GET, "/contas/{id}").hasRole("ADMIM")
-                        .requestMatchers(HttpMethod.POST, "/contas/{id}/transferencia").hasRole("ADMIM")
-                        .requestMatchers(HttpMethod.GET, "/contas/{id}/saldo").hasRole("ADMIM")
-                        .requestMatchers(HttpMethod.POST, "/contas/{id}/pix").hasRole("ADMIM")
-                        .requestMatchers(HttpMethod.POST, "/contas/{id}/deposito").hasRole("ADMIM")
-                        .requestMatchers(HttpMethod.POST, "/contas/{id}/saque").hasRole("ADMIM")
-                        .requestMatchers(HttpMethod.PUT, "/contas/{id}/manutencao").hasRole("ADMIM")
-                        .requestMatchers(HttpMethod.PUT, "/contas/{id}/rendimentos").hasRole("ADMIM")
 
-                        .requestMatchers(HttpMethod.POST, "/cartoes").hasRole("ADMIM")
-                        .requestMatchers(HttpMethod.GET, "/cartoes/{id}").hasRole("ADMIM")
-                        .requestMatchers(HttpMethod.POST, "//cartoes/{id}/pagamento").hasRole("ADMIM")
-                        .requestMatchers(HttpMethod.PUT, "/cartoes/{id}/limite").hasRole("ADMIM")
-                        .requestMatchers(HttpMethod.PUT, "/cartoes/{id}/status").hasRole("ADMIM")
-                        .requestMatchers(HttpMethod.PUT, "/cartoes/{id}/senha").hasRole("ADMIM")
-                        .requestMatchers(HttpMethod.GET, "/cartoes/{id}/fatura").hasRole("ADMIM")
-                        .requestMatchers(HttpMethod.POST, "/cartoes/{id}/fatura/pagamento").hasRole("ADMIM")
-                        .requestMatchers(HttpMethod.PUT, "/cartoes/{id}/limite-diario").hasRole("ADMIM")
+                        .requestMatchers(HttpMethod.POST, "/conta/register").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/conta/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/esqueci-senha/**").permitAll()
 
-                        .requestMatchers(HttpMethod.POST, "/seguros").hasRole("ADMIM")
-                        .requestMatchers(HttpMethod.GET, "/seguros/{id}").hasRole("ADMIM")
-                        .requestMatchers(HttpMethod.GET, "/seguros").hasRole("ADMIM")
-                        .requestMatchers(HttpMethod.PUT, "/seguros/{id}/cancelar").hasRole("ADMIM")
+
+                        .requestMatchers(HttpMethod.GET, "/clientes/{id}").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/clientes/{id}").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers(HttpMethod.DELETE,"/clientes/{id}").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/clientes").hasRole("ADMIN")
+
+
+                        .requestMatchers(HttpMethod.POST, "/contas").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/contas/{id}").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/contas/{id}/transferencia").hasRole("USER")
+                        .requestMatchers(HttpMethod.GET, "/contas/{id}/saldo").hasRole("USER")
+                        .requestMatchers(HttpMethod.POST, "/contas/{id}/pix").hasRole("USER")
+                        .requestMatchers(HttpMethod.POST, "/contas/{id}/deposito").hasRole("USER")
+                        .requestMatchers(HttpMethod.POST, "/contas/{id}/saque").hasRole("USER")
+                        .requestMatchers(HttpMethod.PUT, "/contas/{id}/manutencao").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/contas/{id}/rendimentos").hasRole("ADMIN")
+
+
+                        .requestMatchers(HttpMethod.POST, "/cartoes").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/cartoes/{id}").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/cartoes/{id}/pagamento").hasRole("USER")
+                        .requestMatchers(HttpMethod.PUT, "/cartoes/{id}/limite").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/cartoes/{id}/status").hasRole("USER")
+                        .requestMatchers(HttpMethod.PUT, "/cartoes/{id}/senha").hasRole("USER")
+                        .requestMatchers(HttpMethod.GET, "/cartoes/{id}/fatura").hasRole("USER")
+                        .requestMatchers(HttpMethod.POST, "/cartoes/{id}/fatura/pagamento").hasRole("USER")
+                        .requestMatchers(HttpMethod.PUT, "/cartoes/{id}/limite-diario").hasRole("USER")
+
+
+                        .requestMatchers(HttpMethod.POST, "/seguros").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/seguros/{id}").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/seguros").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/seguros/{id}/cancelar").hasRole("USER")
+
                         .anyRequest().authenticated()
                 )
+                .headers(headers -> headers
+                        .frameOptions(frameOptions -> frameOptions.disable()))
                 .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }

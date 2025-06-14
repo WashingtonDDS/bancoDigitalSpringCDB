@@ -5,10 +5,13 @@ import br.com.cdb.bancoDigitalCdb.dto.RegisterRequestDTO;
 import br.com.cdb.bancoDigitalCdb.dto.ResponseDTO;
 import br.com.cdb.bancoDigitalCdb.entity.Cliente;
 import br.com.cdb.bancoDigitalCdb.entity.ContaCorrente;
+import br.com.cdb.bancoDigitalCdb.entity.ContaPoupanca;
 import br.com.cdb.bancoDigitalCdb.entity.TipoDeConta;
 import br.com.cdb.bancoDigitalCdb.repository.ClienteRepository;
-import br.com.cdb.bancoDigitalCdb.repository.ContaCorrenteRepository;
+
 import br.com.cdb.bancoDigitalCdb.security.TokenService;
+
+import br.com.cdb.bancoDigitalCdb.service.ContaService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -17,15 +20,17 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Optional;
 
+
 @RestController
 @RequestMapping("/conta")
 @RequiredArgsConstructor
 public class ContaController {
 
     private final ClienteRepository clienteRepository;
-    private final ContaCorrenteRepository contaCorrenteRepository;
     private final PasswordEncoder passwordEncoder;
     private final TokenService tokenService;
+    private final ContaService contaService;
+
 
 
     @PostMapping("/register")
@@ -45,13 +50,9 @@ public class ContaController {
             Cliente salvaCliente = this.clienteRepository.save(newCliente);
 
             if (body.tipoDeConta() == TipoDeConta.CORRENTE){
-                ContaCorrente contaCorrente = ContaCorrente.builder()
-                        .cliente(salvaCliente)
-                        .numeroDaConta(gerarNumeroDaConta())
-                        .saldo(0.0)
-                        .taxaDeManutencao(aplicarTaxaDeManutencao())
-                        .build();
-                contaCorrenteRepository.save(contaCorrente);
+                ContaCorrente contaCorrente = contaService.criarContaCorrente(salvaCliente);
+            } else if (body.tipoDeConta() == TipoDeConta.POUPANCA) {
+                ContaPoupanca contaPoupanca = contaService.criarContaPoupanca(salvaCliente);
             }
 
             String token = this.tokenService.generateToken(newCliente);
@@ -69,9 +70,11 @@ public class ContaController {
         }
         return ResponseEntity.badRequest().build();
     }
+
     @GetMapping("/contas")
     public List<Cliente> getAllClientes() {
         return clienteRepository.findAll();
     }
+
 
 }

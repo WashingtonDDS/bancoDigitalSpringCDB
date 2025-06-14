@@ -1,17 +1,16 @@
 package br.com.cdb.bancoDigitalCdb.entity;
 
 
-import jakarta.persistence.Entity;
+import jakarta.persistence.*;
 import lombok.*;
 
-@Entity
+@Embeddable
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
 @Setter
 @Builder
 public class Endereco {
-
     private String rua;
 
     private String numeroDaCasa;

@@ -16,19 +16,20 @@ public class ContaCorrente {
     private String id;
 
     @OneToOne
-    @JoinColumn(name = "cliente_id", referencedColumnName = "id")
+    @JoinColumn(name = "cliente_id")
     private Cliente cliente;
 
+    @Column(unique = true)
     private long numeroDaConta;
 
     private double saldo;
-
     private double taxaDeManutencao;
 
-    @OneToOne(cascade = CascadeType.ALL)
+    @OneToOne(mappedBy = "contaCorrente", cascade = CascadeType.ALL)
     private CartaoDeDebito cartaoDeDebito;
 
-    @OneToOne(cascade = CascadeType.ALL)
+    @OneToOne(mappedBy = "contaCorrente", cascade = CascadeType.ALL)
     private CartaoDeCredito cartaoDeCredito;
+
 
 }

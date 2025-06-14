@@ -9,5 +9,5 @@ import java.util.Optional;
 
 public interface EsqueciMinhaSenhaRepository extends JpaRepository<EsqueciMinhaSenha, String> {
 
-    Optional<EsqueciMinhaSenha> findByOtpCliente(Integer otp, Cliente cliente);
+    Optional<EsqueciMinhaSenha> findByOtpAndCliente(Integer otp, Cliente cliente);
 }

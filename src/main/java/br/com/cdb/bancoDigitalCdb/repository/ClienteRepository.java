@@ -12,6 +12,8 @@ import java.util.Optional;
 public interface ClienteRepository extends JpaRepository<Cliente , String> {
     Optional<Cliente> findByEmail(String email);
 
+    Optional<Cliente> findByCpf(String cpf);
+
     @Transactional
     @Modifying
     @Query("update clientes c set c.password = ?2 where c.email = ?1")

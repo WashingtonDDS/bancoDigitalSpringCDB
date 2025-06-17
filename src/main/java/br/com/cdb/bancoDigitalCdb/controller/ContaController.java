@@ -3,22 +3,19 @@ package br.com.cdb.bancoDigitalCdb.controller;
 import br.com.cdb.bancoDigitalCdb.dto.LoginRequestDTO;
 import br.com.cdb.bancoDigitalCdb.dto.RegisterRequestDTO;
 import br.com.cdb.bancoDigitalCdb.dto.ResponseDTO;
-import br.com.cdb.bancoDigitalCdb.entity.Cliente;
-import br.com.cdb.bancoDigitalCdb.entity.ContaCorrente;
-import br.com.cdb.bancoDigitalCdb.entity.ContaPoupanca;
-import br.com.cdb.bancoDigitalCdb.entity.TipoDeConta;
-import br.com.cdb.bancoDigitalCdb.repository.ClienteRepository;
+import br.com.cdb.bancoDigitalCdb.entity.*;
+
 
 import br.com.cdb.bancoDigitalCdb.security.TokenService;
 
+import br.com.cdb.bancoDigitalCdb.service.ClienteService;
 import br.com.cdb.bancoDigitalCdb.service.ContaService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
+
 
 
 @RestController
@@ -26,54 +23,44 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class ContaController {
 
-    private final ClienteRepository clienteRepository;
-    private final PasswordEncoder passwordEncoder;
+
     private final TokenService tokenService;
     private final ContaService contaService;
+    private final ClienteService clienteService;
 
 
 
     @PostMapping("/register")
     public ResponseEntity register (@RequestBody RegisterRequestDTO body ){
-        Optional<Cliente> cliente = this.clienteRepository.findByEmail(body.email());
-        if (cliente.isEmpty()){
-            Cliente newCliente = new Cliente();
-            newCliente.setPassword(passwordEncoder.encode(body.password()));
-            newCliente.setEmail(body.email());
-            newCliente.setName(body.name());
-            newCliente.setCpf(body.cpf());
-            newCliente.setDataDeNascimento(body.dataDeNascimento());
-            newCliente.setEndereco(body.endereco());
-            newCliente.setTipoCliente(body.tipoCliente());
-            newCliente.setTipoDeConta(body.tipoDeConta());
-            newCliente.setRole(body.role());
-            Cliente salvaCliente = this.clienteRepository.save(newCliente);
+        try {
+            Cliente newCliente = clienteService.criarClienteComEndereco(body);
 
             if (body.tipoDeConta() == TipoDeConta.CORRENTE){
-                ContaCorrente contaCorrente = contaService.criarContaCorrente(salvaCliente);
+                ContaCorrente contaCorrente = contaService.criarContaCorrente(newCliente);
             } else if (body.tipoDeConta() == TipoDeConta.POUPANCA) {
-                ContaPoupanca contaPoupanca = contaService.criarContaPoupanca(salvaCliente);
+                ContaPoupanca contaPoupanca = contaService.criarContaPoupanca(newCliente);
             }
 
             String token = this.tokenService.generateToken(newCliente);
             return ResponseEntity.ok(new ResponseDTO(newCliente.getName(),token));
-
+        }catch (Exception e){
+            return ResponseEntity.badRequest().build();
         }
-        return ResponseEntity.badRequest().build();
+
     }
     @PostMapping("/login")
     public ResponseEntity login (@RequestBody LoginRequestDTO body ){
-        Cliente cliente = this.clienteRepository.findByEmail(body.email()).orElseThrow(()-> new RuntimeException("User not found") );
-        if (passwordEncoder.matches(body.password(), cliente.getPassword())){
+        try {
+            Cliente cliente = clienteService.autenticar(body.email(), body.password());
             String token = this.tokenService.generateToken(cliente);
             return ResponseEntity.ok(new ResponseDTO(cliente.getName(),token));
+        }catch (RuntimeException e){
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
-        return ResponseEntity.badRequest().build();
     }
-
     @GetMapping("/contas")
-    public List<Cliente> getAllClientes() {
-        return clienteRepository.findAll();
+    public ResponseEntity<List<Conta>> listarTodasContas() {
+        return ResponseEntity.ok(contaService.listarTodasContas());
     }
 
 

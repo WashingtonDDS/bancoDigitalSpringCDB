@@ -42,13 +42,13 @@ public class SecurityConfig {
 
                         .requestMatchers(HttpMethod.POST, "/conta/register").permitAll()
                         .requestMatchers(HttpMethod.POST, "/conta/login").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/esqueci-senha/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/esqueciMinhasenha/**").permitAll()
 
 
                         .requestMatchers(HttpMethod.GET, "/clientes/{id}").hasAnyRole("USER", "ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/clientes/{id}").hasAnyRole("USER", "ADMIN")
                         .requestMatchers(HttpMethod.DELETE,"/clientes/{id}").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/clientes").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/cliente/clientes").hasRole("ADMIN")
 
 
                         .requestMatchers(HttpMethod.POST, "/contas").hasRole("ADMIN")

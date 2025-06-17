@@ -10,19 +10,9 @@ import lombok.*;
 @Getter
 @Setter
 @Builder
-public class ContaPoupanca {
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private String id;
+public class ContaPoupanca extends Conta{
 
-    @OneToOne
-    @JoinColumn(name = "cliente_id")
-    private Cliente cliente;
 
-    @Column(unique = true)
-    private long numeroDaConta;
-
-    private double saldo;
     private double rendimento;
 
     @OneToOne(mappedBy = "contaPoupanca", cascade = CascadeType.ALL)

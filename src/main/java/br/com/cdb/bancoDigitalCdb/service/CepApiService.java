@@ -4,8 +4,8 @@ import br.com.cdb.bancoDigitalCdb.entity.Endereco;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 @Service
@@ -18,14 +18,21 @@ public class CepApiService {
     }
 
     public Endereco buscarEnderecoPorCep(String cep){
-        String url = "https://brasilapi.com.br/api/cep/v1/"+cep;
+        try {
 
-        BrasilApiResponse response = restTemplate.getForObject(url, BrasilApiResponse.class);
+            String url = "https://brasilapi.com.br/api/cep/v1/"+cep;
 
-        if (response == null){
+            BrasilApiResponse response = restTemplate.getForObject(url, BrasilApiResponse.class);
+
+            if (response == null){
+                throw new RuntimeException("CEP não encontrado");
+            }
+            return response.toEndereco();
+        } catch (HttpClientErrorException.NotFound ex) {
             throw new RuntimeException("CEP não encontrado");
-        }
-        return response.toEndereco();
+        } catch (Exception ex) {
+            throw new RuntimeException("Erro ao consultar CEP: " + ex.getMessage());
+    }
     }
     @Getter
     @Setter

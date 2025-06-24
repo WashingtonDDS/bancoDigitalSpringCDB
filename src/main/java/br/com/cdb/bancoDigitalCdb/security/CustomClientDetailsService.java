@@ -18,7 +18,7 @@ public class CustomClientDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        Cliente cliente = this.repository.findByEmail(username).orElseThrow(()-> new  UsernameNotFoundException("User not found"));
+        Cliente cliente = this.repository.findByEmail(username).orElseThrow(()-> new  UsernameNotFoundException("Cliente não encontrado com o email: " + username));
         return new org.springframework.security.core.userdetails.User(cliente.getEmail(), cliente.getPassword(), new ArrayList<>());
     }
 }

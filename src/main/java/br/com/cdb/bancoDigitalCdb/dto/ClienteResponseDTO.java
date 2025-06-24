@@ -14,7 +14,7 @@ public record ClienteResponseDTO(
 ) {
     public ClienteResponseDTO(Cliente cliente) {
         this(
-                cliente.getName(),
+                cliente.getNome(),
                 cliente.getEmail(),
                 mascararCpf(cliente.getCpf()),
                 cliente.getDataDeNascimento(),

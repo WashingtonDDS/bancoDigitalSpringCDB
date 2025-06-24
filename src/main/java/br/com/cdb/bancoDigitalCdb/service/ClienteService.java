@@ -1,5 +1,6 @@
 package br.com.cdb.bancoDigitalCdb.service;
 
+import br.com.cdb.bancoDigitalCdb.dto.AtualizacaoParcialClienteDTO;
 import br.com.cdb.bancoDigitalCdb.dto.RegisterRequestDTO;
 import br.com.cdb.bancoDigitalCdb.entity.Cliente;
 import br.com.cdb.bancoDigitalCdb.entity.Endereco;
@@ -43,7 +44,7 @@ public class ClienteService {
         Cliente newCliente = new Cliente();
         newCliente.setPassword(passwordEncoder.encode(request.password()));
         newCliente.setEmail(request.email());
-        newCliente.setName(request.name());
+        newCliente.setNome(request.nome());
         newCliente.setCpf(request.cpf());
         newCliente.setDataDeNascimento(request.dataDeNascimento());
         newCliente.setEndereco(endereco);
@@ -70,5 +71,37 @@ public class ClienteService {
             throw new BusinessException("CPF inválido");
         }
         return clienteRepository.findByCpf(cpf).orElseThrow(() -> new BusinessException("Cliente não encontrado"));
+    }
+
+    public  Cliente atualizarCliente(String cpf, AtualizacaoParcialClienteDTO request){
+        String cpfFormatado = cpf.replaceAll("\\D", "");
+        if (!cpfService.validarCpf(cpfFormatado)) {
+            throw new BusinessException("CPF inválido");
+        }
+
+        Cliente cliente = clienteRepository.findByCpf(cpf).orElseThrow(() -> new BusinessException("Cliente não encontrado"));
+
+        if (request.nome() != null) {
+            cliente.setNome(request.nome());
+        }
+        if (request.email() != null) {
+            if (!cliente.getEmail().equals(request.email())) {
+                if (clienteRepository.existsByEmail(request.email())) {
+                    throw new BusinessException("Email já cadastrado");
+                }
+                cliente.setEmail(request.email());
+            }
+        }
+        if (request.dataDeNascimento() != null) {
+            cliente.setDataDeNascimento(request.dataDeNascimento());
+        }
+        if (request.endereco() != null) {
+            cliente.setEndereco(request.endereco());
+        }
+        if (request.tipoCliente() != null) {
+            cliente.setTipoCliente(request.tipoCliente());
+        }
+
+        return clienteRepository.save(cliente);
     }
 }

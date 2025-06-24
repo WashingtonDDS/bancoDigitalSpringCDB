@@ -7,5 +7,5 @@ import br.com.cdb.bancoDigitalCdb.entity.TipoDeConta;
 
 import java.time.LocalDate;
 
-public record RegisterRequestDTO(String name, String email, String password, String cpf, LocalDate dataDeNascimento, Endereco endereco, TipoCliente tipoCliente, ClienteRole role, TipoDeConta tipoDeConta) {
+public record RegisterRequestDTO(String nome, String email, String password, String cpf, LocalDate dataDeNascimento, Endereco endereco, TipoCliente tipoCliente, ClienteRole role, TipoDeConta tipoDeConta) {
 }

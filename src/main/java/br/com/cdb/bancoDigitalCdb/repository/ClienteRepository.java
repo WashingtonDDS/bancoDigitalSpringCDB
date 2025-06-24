@@ -10,7 +10,10 @@ import org.springframework.data.jpa.repository.Query;
 import java.util.Optional;
 
 public interface ClienteRepository extends JpaRepository<Cliente , String> {
+   boolean existsByEmail(String email);
+
     Optional<Cliente> findByEmail(String email);
+
 
     Optional<Cliente> findByCpf(String cpf);
 

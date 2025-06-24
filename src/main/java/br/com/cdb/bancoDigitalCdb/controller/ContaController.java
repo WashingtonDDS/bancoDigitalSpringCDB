@@ -42,7 +42,7 @@ public class ContaController {
             }
 
             String token = this.tokenService.generateToken(newCliente);
-            return ResponseEntity.ok(new ResponseDTO(newCliente.getName(),token));
+            return ResponseEntity.ok(new ResponseDTO(newCliente.getNome(),token));
         }catch (Exception e){
             return ResponseEntity.badRequest().build();
         }
@@ -53,7 +53,7 @@ public class ContaController {
         try {
             Cliente cliente = clienteService.autenticar(body.email(), body.password());
             String token = this.tokenService.generateToken(cliente);
-            return ResponseEntity.ok(new ResponseDTO(cliente.getName(),token));
+            return ResponseEntity.ok(new ResponseDTO(cliente.getNome(),token));
         }catch (RuntimeException e){
             return ResponseEntity.badRequest().body(e.getMessage());
         }

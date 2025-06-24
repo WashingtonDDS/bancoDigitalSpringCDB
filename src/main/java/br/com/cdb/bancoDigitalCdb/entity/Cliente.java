@@ -23,7 +23,7 @@ public class Cliente implements UserDetails {
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
-    private String name;
+    private String nome;
 
     @Column(nullable = false, unique = true)
     private String email;

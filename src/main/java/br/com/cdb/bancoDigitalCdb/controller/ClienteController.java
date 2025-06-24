@@ -1,16 +1,14 @@
 package br.com.cdb.bancoDigitalCdb.controller;
 
 
+import br.com.cdb.bancoDigitalCdb.dto.AtualizacaoParcialClienteDTO;
 import br.com.cdb.bancoDigitalCdb.dto.ClienteResponseDTO;
 import br.com.cdb.bancoDigitalCdb.entity.Cliente;
 import br.com.cdb.bancoDigitalCdb.service.ClienteService;
 import jakarta.validation.constraints.Pattern;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -31,10 +29,18 @@ public class ClienteController {
 
     @GetMapping("/clientes/{cpf}")
     public ResponseEntity<ClienteResponseDTO>detalharClientePorCpf(
-            @RequestParam @Pattern
+            @PathVariable @Pattern
                     (regexp =  "\\d{11}", message = "CPF deve conter 11 dígitos")String cpf){
         Cliente cliente = clienteService.detalharCliente(cpf);
         return ResponseEntity.ok(new ClienteResponseDTO(cliente));
 
+    }
+    @PatchMapping("/clientes/{cpf}")
+    public ResponseEntity<ClienteResponseDTO> atualizarParcialCliente(
+            @PathVariable @Pattern
+                    (regexp =  "\\d{11}", message = "CPF deve conter 11 dígitos")String cpf,
+            @RequestBody AtualizacaoParcialClienteDTO request) {
+        Cliente clienteAtualizado = clienteService.atualizarCliente(cpf, request);
+        return ResponseEntity.ok(new ClienteResponseDTO(clienteAtualizado));
     }
 }

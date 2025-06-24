@@ -15,8 +15,6 @@ public class ContaCorrente extends Conta {
 
     private double taxaDeManutencao;
 
-    @OneToOne(mappedBy = "contaCorrente", cascade = CascadeType.ALL)
-    private CartaoDeDebito cartaoDeDebito;
 
     @OneToOne(mappedBy = "contaCorrente", cascade = CascadeType.ALL)
     private CartaoDeCredito cartaoDeCredito;

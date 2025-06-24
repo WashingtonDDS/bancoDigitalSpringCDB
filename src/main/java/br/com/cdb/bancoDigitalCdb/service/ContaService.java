@@ -7,6 +7,7 @@ import br.com.cdb.bancoDigitalCdb.entity.ContaPoupanca;
 import br.com.cdb.bancoDigitalCdb.repository.ContaRepository;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Random;
 
@@ -26,7 +27,7 @@ public class ContaService {
         ContaPoupanca contaPoupanca = new ContaPoupanca();
         contaPoupanca.setCliente(cliente);
         contaPoupanca.setNumeroDaConta(gerarNumeroDaConta());
-        contaPoupanca.setSaldo(0.0);
+        contaPoupanca.setSaldo(BigDecimal.ZERO);
         contaPoupanca.setRendimento(0.0);
         return (ContaPoupanca) contaRepository.save(contaPoupanca);
     }
@@ -35,7 +36,7 @@ public class ContaService {
         ContaCorrente contaCorrente = new ContaCorrente();
         contaCorrente.setCliente(cliente);
         contaCorrente.setNumeroDaConta(gerarNumeroDaConta());
-        contaCorrente.setSaldo(0.0);
+        contaCorrente.setSaldo(BigDecimal.ZERO);
         contaCorrente.setTaxaDeManutencao(0.0);
         return (ContaCorrente) contaRepository.save(contaCorrente);
     }

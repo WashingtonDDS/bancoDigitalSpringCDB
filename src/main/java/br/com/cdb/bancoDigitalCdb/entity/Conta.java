@@ -6,6 +6,8 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.math.BigDecimal;
+
 
 @Entity
 @Setter
@@ -19,7 +21,7 @@ public abstract class Conta {
     @Column(unique = true)
     private long numeroDaConta;
 
-    private double saldo;
+    private BigDecimal saldo;
 
     @ManyToOne
     @JoinColumn(name = "cliente_id")

@@ -15,8 +15,6 @@ public class ContaPoupanca extends Conta{
 
     private double rendimento;
 
-    @OneToOne(mappedBy = "contaPoupanca", cascade = CascadeType.ALL)
-    private CartaoDeDebito cartaoDeDebito;
 
 
 }

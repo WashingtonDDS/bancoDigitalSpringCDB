@@ -7,10 +7,13 @@ import br.com.cdb.bancoDigitalCdb.entity.Conta;
 import br.com.cdb.bancoDigitalCdb.entity.Endereco;
 import br.com.cdb.bancoDigitalCdb.handler.BusinessException;
 import br.com.cdb.bancoDigitalCdb.repository.ClienteRepository;
+import br.com.cdb.bancoDigitalCdb.repository.ContaRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class ClienteService {
@@ -18,12 +21,14 @@ public class ClienteService {
     private final CepApiService cepApiService;
     private final PasswordEncoder passwordEncoder;
     private final CpfService cpfService;
+    private final ContaRepository contaRepository;
 
-    public ClienteService(ClienteRepository clienteRepository, CepApiService cepApiService, PasswordEncoder passwordEncoder, CpfService cpfService) {
+    public ClienteService(ClienteRepository clienteRepository, CepApiService cepApiService, PasswordEncoder passwordEncoder, CpfService cpfService, ContaRepository contaRepository) {
         this.clienteRepository = clienteRepository;
         this.cepApiService = cepApiService;
         this.passwordEncoder = passwordEncoder;
         this.cpfService = cpfService;
+        this.contaRepository = contaRepository;
     }
 
     public Cliente criarClienteComEndereco(RegisterRequestDTO request){
@@ -105,15 +110,23 @@ public class ClienteService {
 
         return clienteRepository.save(cliente);
     }
-    public void deletaClientePorCpf(String cpf){
-        String cpfFormatado = cpf.replaceAll("\\D", "");
-        if (!cpfService.validarCpf(cpfFormatado)){
-            throw new BusinessException("CPF inválido");
+    public void deleteCliente(String id) {
+        Cliente cliente = clienteRepository.findById(id)
+                .orElseThrow(() -> new BusinessException("Cliente não encontrado"));
+
+        List<Conta> contas = contaRepository.findByClienteId(id);
+        List<Conta> contasComSaldo = contas.stream()
+                .filter(conta -> conta.getSaldo().compareTo(BigDecimal.ZERO) > 0)
+                .toList();
+
+        if (!contasComSaldo.isEmpty()) {
+            String mensagem = contasComSaldo.stream()
+                    .map(conta -> "Conta " + conta.getNumeroDaConta() + ": R$ " + conta.getSaldo())
+                    .collect(Collectors.joining("\n", "Contas com saldo:\n", ""));
+            throw new BusinessException(mensagem);
         }
-        Cliente cliente = clienteRepository.findByCpf(cpfFormatado).orElseThrow(() -> new BusinessException("Cliente não encontrado"));
 
-        List<Conta> constasComSaldo = cliente.getTipoDeConta().
-
-
+        contaRepository.deleteAll(contas);
+        clienteRepository.delete(cliente);
     }
 }

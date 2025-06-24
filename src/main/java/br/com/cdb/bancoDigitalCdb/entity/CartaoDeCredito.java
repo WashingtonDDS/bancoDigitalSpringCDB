@@ -28,4 +28,13 @@ public class CartaoDeCredito {
     private boolean ativoOuDesativo;
     private double taxaDeUtilizacao;
 
+
+    @PrePersist
+    @PreUpdate
+    public void  validar(){
+        if (!contaCorrente.getCliente().equals(cliente)){
+            throw new IllegalStateException("Conta não pertence ao cliente");
+        }
+    }
+
 }

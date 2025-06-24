@@ -14,15 +14,9 @@ public class CartaoDeDebito {
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
-    // Relacionamento com ContaCorrente
-    @OneToOne
-    @JoinColumn(name = "conta_corrente_id")
-    private ContaCorrente contaCorrente;
-
-
-    @OneToOne
-    @JoinColumn(name = "conta_poupanca_id")
-    private ContaPoupanca contaPoupanca;
+    @ManyToOne
+    @JoinColumn(name = "conta_id")
+    private Conta conta;
 
     @ManyToOne
     @JoinColumn(name = "cliente_id")
@@ -31,5 +25,13 @@ public class CartaoDeDebito {
     private double limiteDiarioTransacao;
     private boolean ativoOuDesativo;
     private double taxaDeManutencao;
+
+    @PrePersist
+    @PreUpdate
+    public void  validar(){
+        if (!conta.getCliente().equals(cliente)){
+            throw new IllegalStateException("Conta não pertence ao cliente");
+        }
+    }
 
 }

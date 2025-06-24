@@ -3,6 +3,7 @@ package br.com.cdb.bancoDigitalCdb.service;
 import br.com.cdb.bancoDigitalCdb.dto.AtualizacaoParcialClienteDTO;
 import br.com.cdb.bancoDigitalCdb.dto.RegisterRequestDTO;
 import br.com.cdb.bancoDigitalCdb.entity.Cliente;
+import br.com.cdb.bancoDigitalCdb.entity.Conta;
 import br.com.cdb.bancoDigitalCdb.entity.Endereco;
 import br.com.cdb.bancoDigitalCdb.handler.BusinessException;
 import br.com.cdb.bancoDigitalCdb.repository.ClienteRepository;
@@ -103,5 +104,16 @@ public class ClienteService {
         }
 
         return clienteRepository.save(cliente);
+    }
+    public void deletaClientePorCpf(String cpf){
+        String cpfFormatado = cpf.replaceAll("\\D", "");
+        if (!cpfService.validarCpf(cpfFormatado)){
+            throw new BusinessException("CPF inválido");
+        }
+        Cliente cliente = clienteRepository.findByCpf(cpfFormatado).orElseThrow(() -> new BusinessException("Cliente não encontrado"));
+
+        List<Conta> constasComSaldo = cliente.getTipoDeConta().
+
+
     }
 }

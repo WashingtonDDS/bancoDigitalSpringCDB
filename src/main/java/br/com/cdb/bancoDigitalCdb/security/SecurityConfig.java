@@ -54,12 +54,12 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/contas").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/contas/{id}").hasAnyRole("USER", "ADMIN")
                         .requestMatchers(HttpMethod.POST, "/{id}/transferencia").hasRole("USER")
-                        .requestMatchers(HttpMethod.GET, "/contas/{id}/saldo").hasRole("USER")
-                        .requestMatchers(HttpMethod.POST, "/contas/{id}/pix").hasRole("USER")
-                        .requestMatchers(HttpMethod.POST, "/contas/{id}/deposito").hasRole("USER")
-                        .requestMatchers(HttpMethod.POST, "/contas/{id}/saque").hasRole("USER")
-                        .requestMatchers(HttpMethod.PUT, "/contas/{id}/manutencao").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/contas/{id}/rendimentos").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/{id}/saldo").hasRole("USER")
+                        .requestMatchers(HttpMethod.POST, "/{id}/pix").hasRole("USER")
+                        .requestMatchers(HttpMethod.POST, "/{id}/deposito").hasRole("USER")
+                        .requestMatchers(HttpMethod.POST, "/{id}/saque").hasRole("USER")
+                        .requestMatchers(HttpMethod.PUT, "/{id}/manutencao").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/{id}/rendimentos").hasRole("ADMIN")
 
 
                         .requestMatchers(HttpMethod.POST, "/cartoes").hasRole("ADMIN")

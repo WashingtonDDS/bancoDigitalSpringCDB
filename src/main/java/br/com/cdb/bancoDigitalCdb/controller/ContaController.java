@@ -96,6 +96,16 @@ public class ContaController {
         contaService.realizarSaque(id, request);
         return ResponseEntity.ok().build();
     }
+    @PutMapping("/{id}/manutencao")
+    public ResponseEntity<Void> aplicarTaxaManutencao(@PathVariable String id) {
+        contaService.aplicarTaxaManutencao(id);
+        return ResponseEntity.ok().build();
+    }
+    @PutMapping("/{id}/rendimentos")
+    public ResponseEntity<Void> aplicarRendimentos(@PathVariable String id) {
+        contaService.aplicarRendimento(id);
+        return ResponseEntity.ok().build();
+    }
 
 
 }

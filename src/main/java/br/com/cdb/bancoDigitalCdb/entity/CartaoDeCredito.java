@@ -3,6 +3,10 @@ package br.com.cdb.bancoDigitalCdb.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.List;
+
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
@@ -23,8 +27,14 @@ public class CartaoDeCredito {
     @JoinColumn(name = "cliente_id")
     private Cliente cliente;
 
-    private double limitePreAprovado;
-    private String dataVencimento;
+    @OneToMany(mappedBy = "cartao")
+    private List<Fatura> faturas;
+
+    private String numero;
+    private String senha;
+    private BigDecimal faturaAtual = BigDecimal.ZERO;;
+    private BigDecimal limitePreAprovado;
+    private LocalDate dataVencimento;
     private boolean ativoOuDesativo;
     private double taxaDeUtilizacao;
 

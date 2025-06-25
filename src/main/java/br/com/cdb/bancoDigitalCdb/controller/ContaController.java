@@ -1,8 +1,6 @@
 package br.com.cdb.bancoDigitalCdb.controller;
 
-import br.com.cdb.bancoDigitalCdb.dto.LoginRequestDTO;
-import br.com.cdb.bancoDigitalCdb.dto.RegisterRequestDTO;
-import br.com.cdb.bancoDigitalCdb.dto.ResponseDTO;
+import br.com.cdb.bancoDigitalCdb.dto.*;
 import br.com.cdb.bancoDigitalCdb.entity.*;
 
 
@@ -61,6 +59,42 @@ public class ContaController {
     @GetMapping("/contas")
     public ResponseEntity<List<Conta>> listarTodasContas() {
         return ResponseEntity.ok(contaService.listarTodasContas());
+    }
+    @GetMapping("/contas/{id}")
+    public ResponseEntity<Conta> detalharContaPorId(@PathVariable String id) {
+        Conta conta = contaService.detalharConta(id);
+        return ResponseEntity.ok(conta);
+    }
+
+    @PostMapping("/{id}/deposito")
+    public ResponseEntity<Void> realizarDeposito(
+            @PathVariable String id,
+            @RequestBody DepositoRequest request) {
+        contaService.realizarDeposito(id, request);
+        return ResponseEntity.ok().build();
+    }
+    @GetMapping("/{id}/saldo")
+    public ResponseEntity<SaldoResponse> consultarSaldo(@PathVariable String id) {
+        return ResponseEntity.ok(contaService.consultarSaldo(id));
+    }
+
+    @PostMapping("/{id}/transferencia")
+    public ResponseEntity<Void> transferir(@PathVariable String id, @RequestBody TransferenciaRequest request) {
+        contaService.transferir(id, request);
+        return ResponseEntity.ok().build();
+
+    }
+    @PostMapping("/{id}/pix")
+    public ResponseEntity<Void> realizarPix(@PathVariable String id, @RequestBody PixRequest pixRequest) {
+        contaService.fazerPix(id, pixRequest);
+        return ResponseEntity.ok().build();
+    }
+    @PostMapping("/{id}/saque")
+    public ResponseEntity<Void> realizarSaque(
+            @PathVariable String id,
+            @RequestBody SaqueRequest request) {
+        contaService.realizarSaque(id, request);
+        return ResponseEntity.ok().build();
     }
 
 

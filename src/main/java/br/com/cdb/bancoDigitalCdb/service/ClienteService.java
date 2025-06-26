@@ -32,6 +32,7 @@ public class ClienteService {
     }
 
     public Cliente criarClienteComEndereco(RegisterRequestDTO request){
+
         Endereco endereco;
         if (request.endereco().getCep() != null && !request.endereco().getCep().isBlank()){
             endereco = cepApiService.buscarEnderecoPorCep(request.endereco().getCep());
@@ -48,7 +49,7 @@ public class ClienteService {
             endereco.setCep(request.endereco().getCep());
          }
         Cliente newCliente = new Cliente();
-        newCliente.setPassword(passwordEncoder.encode(request.password()));
+        newCliente.setPassword(passwordEncoder.encode(validarSenha(request.password())));
         newCliente.setEmail(request.email());
         newCliente.setNome(request.nome());
         newCliente.setCpf(request.cpf());
@@ -67,6 +68,24 @@ public class ClienteService {
             throw new BusinessException("Senha incorreta");
         }
         return cliente;
+    }
+    private String validarSenha(String senha) {
+        if (senha == null || senha.length() < 8) {
+            throw new BusinessException("Senha deve ter no mínimo 8 caracteres");
+        }
+
+        if (!senha.matches(".*[A-Z].*")) {
+            throw new BusinessException("Senha deve conter pelo menos 1 letra maiúscula");
+        }
+
+        if (!senha.matches(".*[a-z].*")) {
+            throw new BusinessException("Senha deve conter pelo menos 1 letra minúscula");
+        }
+
+        if (!senha.matches(".*\\d.*")) {
+            throw new BusinessException("Senha deve conter pelo menos 1 número");
+        }
+        return senha;
     }
     public List<Cliente>listarTodosClientes() {
         return clienteRepository.findAll();

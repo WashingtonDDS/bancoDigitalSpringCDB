@@ -146,17 +146,47 @@ public class CartaoService {
     }
 
     @Transactional
-    public void alterarLimiteDiario(String cartaoId, AlterarLimiteDiarioRequestDTO request){
+    public void alterarLimiteDiario(String cartaoId, AlterarLimiteRequestDTO request){
         CartaoDeDebito cartao = cartaoDebitoRepository.findById(cartaoId)
                 .orElseThrow(() -> new CartaoNaoEncontradaException("Cartão de débito não encontrado"));
 
-        if (request.novoLimiteDiario().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new BusinessException("Limite diário deve ser maior que zero");
+        if (request.novoLimite().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new LimiteException("Limite diário deve ser maior que zero");
         }
 
-        cartao.setLimiteDiarioTransacao(request.novoLimiteDiario());
+        cartao.setLimiteDiarioTransacao(request.novoLimite());
         cartaoDebitoRepository.save(cartao);
     }
+
+    @Transactional
+    public void alterarLimiteCredito(String cartaoId, AlterarLimiteRequestDTO request) {
+        CartaoDeCredito cartao = cartaoCreditoRepository.findById(cartaoId)
+                .orElseThrow(() -> new CartaoNaoEncontradaException("Cartão de crédito não encontrado"));
+
+        if (request.novoLimite().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new LimiteException("Limite de crédito deve ser maior que zero");
+        }
+
+        cartao.setLimitePreAprovado(request.novoLimite());
+        cartaoCreditoRepository.save(cartao);
+    }
+
+    @Transactional
+    public void alterarStatus(String cartaoId, AlterarStatusRequestDTO request ){
+        if (cartaoId.startsWith("CD")){
+            CartaoDeDebito cartao = cartaoDebitoRepository.findById(cartaoId)
+                    .orElseThrow(() -> new CartaoNaoEncontradaException("Cartão de débito não encontrado"));
+            cartao.setAtivoOuDesativo(request.ativo());
+            cartaoDebitoRepository.save(cartao);
+        } else {
+            CartaoDeCredito cartao = cartaoCreditoRepository.findById(cartaoId)
+                    .orElseThrow(() -> new CartaoNaoEncontradaException("Cartão de crédito não encontrado"));
+            cartao.setAtivoOuDesativo(request.ativo());
+            cartaoCreditoRepository.save(cartao);
+        }
+    }
+
+
 
 
 }

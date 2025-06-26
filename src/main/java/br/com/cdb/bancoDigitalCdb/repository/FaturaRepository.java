@@ -1,4 +1,8 @@
 package br.com.cdb.bancoDigitalCdb.repository;
 
-public class FaturaRepository {
+
+import br.com.cdb.bancoDigitalCdb.entity.Fatura;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface FaturaRepository extends JpaRepository<Fatura, String> {
 }

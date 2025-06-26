@@ -4,6 +4,7 @@ package br.com.cdb.bancoDigitalCdb.service;
 import br.com.cdb.bancoDigitalCdb.dto.CartaoRequestDTO;
 import br.com.cdb.bancoDigitalCdb.dto.CartaoResponseDTO;
 import br.com.cdb.bancoDigitalCdb.dto.PagamentoCartaoRequestDTO;
+import br.com.cdb.bancoDigitalCdb.dto.PagamentoFaturaRequestDTO;
 import br.com.cdb.bancoDigitalCdb.entity.*;
 import br.com.cdb.bancoDigitalCdb.handler.*;
 import br.com.cdb.bancoDigitalCdb.repository.CartaoCreditoRepository;
@@ -14,6 +15,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Random;
 
@@ -50,12 +52,24 @@ public class CartaoService {
             CartaoDeCredito cartao = new CartaoDeCredito();
             cartao.setNumero(gerarNumeroCartao());
             cartao.setSenha(passwordEncoder.encode(validarSenhaCartao(request.senha())));
-            cartao.setLimitePreAprovado(request.limiteCredito());
+
+            BigDecimal limiteCredito = calcularLimitePorCliente(conta.getCliente());
+            cartao.setLimitePreAprovado(limiteCredito);
+
             cartao.setDataVencimento(LocalDate.now().plusYears(3));
             cartao.setContaCorrente((ContaCorrente) conta);
             cartaoCreditoRepository.save(cartao);
             return new CartaoResponseDTO(cartao);
         }
+    }
+
+    private BigDecimal calcularLimitePorCliente(Cliente cliente){
+        return switch (cliente.getTipoCliente()) {
+            case COMUM -> new BigDecimal(1000);
+            case SUPER -> new BigDecimal(5000);
+            case PREMIUM -> new BigDecimal(10000);
+            default -> throw new TipoInvalidoException("Tipo de cliente inválido");
+        };
     }
 
     private String validarSenhaCartao(String senha) {
@@ -100,6 +114,38 @@ public class CartaoService {
             cartao.setFaturaAtual(cartao.getFaturaAtual().add(request.valor()));
             cartaoCreditoRepository.save(cartao);
         }
+    }
+
+    @Transactional
+    public void pagarFatura(String cartaoId, PagamentoFaturaRequestDTO request){
+        CartaoDeCredito cartao = cartaoCreditoRepository.findById(cartaoId)
+                .orElseThrow(()-> new CartaoNaoEncontradaException("Cartão de credito não encontrado"));
+
+        Conta conta = contaRepository.findById(request.contaId())
+                .orElseThrow(() -> new ContaNaoEncontradaException("Conta não encontrada"));
+
+        BigDecimal valorPagamento = request.valor();
+        BigDecimal faturaAtual = cartao.getFaturaAtual();
+
+        if (valorPagamento.compareTo(faturaAtual) > 0) {
+            throw new PagamentoFaturaException("Valor do pagamento não pode ser maior que o total da fatura");
+        }
+
+        if (conta.getSaldo().compareTo(valorPagamento) < 0){
+            throw new SaldoInsuficienteException("Saldo insuficiente para pagar a fatura");
+        }
+
+        conta .setSaldo(conta.getSaldo().subtract(valorPagamento));
+        cartao.setFaturaAtual(faturaAtual.subtract(valorPagamento));
+
+        contaRepository.save(conta);
+        cartaoCreditoRepository.save(cartao);
+
+        Fatura fatura = new Fatura();
+        fatura.setCartao(cartao);
+        fatura.setValorPago(valorPagamento);
+        fatura.setDataPagamento(LocalDate.now());
+        faturaRepository.save(fatura);
     }
 
 

@@ -16,7 +16,10 @@ import java.time.LocalDate;
 public class Fatura {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    private Long id;
+    private String id;
+
+    @Column(precision = 10, scale = 2)
+    private BigDecimal totalTaxas = BigDecimal.ZERO;
 
     private BigDecimal valorPago;
     private LocalDate dataPagamento;
@@ -24,4 +27,9 @@ public class Fatura {
     @ManyToOne
     @JoinColumn(name = "cartao_id")
     private CartaoDeCredito cartao;
+
+
+    public void adicionarTaxa(BigDecimal valor) {
+        this.totalTaxas = this.totalTaxas.add(valor);
+    }
 }

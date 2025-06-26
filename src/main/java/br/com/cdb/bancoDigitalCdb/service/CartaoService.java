@@ -1,10 +1,7 @@
 package br.com.cdb.bancoDigitalCdb.service;
 
 
-import br.com.cdb.bancoDigitalCdb.dto.CartaoRequestDTO;
-import br.com.cdb.bancoDigitalCdb.dto.CartaoResponseDTO;
-import br.com.cdb.bancoDigitalCdb.dto.PagamentoCartaoRequestDTO;
-import br.com.cdb.bancoDigitalCdb.dto.PagamentoFaturaRequestDTO;
+import br.com.cdb.bancoDigitalCdb.dto.*;
 import br.com.cdb.bancoDigitalCdb.entity.*;
 import br.com.cdb.bancoDigitalCdb.handler.*;
 import br.com.cdb.bancoDigitalCdb.repository.CartaoCreditoRepository;
@@ -146,6 +143,19 @@ public class CartaoService {
         fatura.setValorPago(valorPagamento);
         fatura.setDataPagamento(LocalDate.now());
         faturaRepository.save(fatura);
+    }
+
+    @Transactional
+    public void alterarLimiteDiario(String cartaoId, AlterarLimiteDiarioRequestDTO request){
+        CartaoDeDebito cartao = cartaoDebitoRepository.findById(cartaoId)
+                .orElseThrow(() -> new CartaoNaoEncontradaException("Cartão de débito não encontrado"));
+
+        if (request.novoLimiteDiario().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new BusinessException("Limite diário deve ser maior que zero");
+        }
+
+        cartao.setLimiteDiarioTransacao(request.novoLimiteDiario());
+        cartaoDebitoRepository.save(cartao);
     }
 
 

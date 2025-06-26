@@ -186,6 +186,44 @@ public class CartaoService {
         }
     }
 
+    @Transactional
+    public void alterarSenha(String cartaoId, AlterarSenhaRequestDTO request){
+        if (cartaoId.startsWith("CD")) {
+            CartaoDeDebito cartao = cartaoDebitoRepository.findById(cartaoId)
+                    .orElseThrow(() -> new CartaoNaoEncontradaException("Cartão de débito não encontrado"));
+            if (!passwordEncoder.matches(request.novaSenha(), cartao.getSenha())) {
+                throw new SenhaIncorretaException("Senha atual incorreta");
+            }
+            if (!request.novaSenha().matches("\\d{4}")) {
+                throw new BusinessException("Senha deve conter 4 dígitos");
+            }
+            cartao.setSenha(passwordEncoder.encode(validarSenhaCartao(request.novaSenha())));
+            cartaoDebitoRepository.save(cartao);
+        } else {
+            CartaoDeCredito cartao = cartaoCreditoRepository.findById(cartaoId)
+                    .orElseThrow(() -> new CartaoNaoEncontradaException("Cartão de crédito não encontrado"));
+            if (!passwordEncoder.matches(request.novaSenha(), cartao.getSenha())) {
+                throw new SenhaIncorretaException("Senha atual incorreta");
+            }
+            if (!request.novaSenha().matches("\\d{4}")) {
+                throw new BusinessException("Senha deve conter 4 dígitos");
+            }
+            cartao.setSenha(passwordEncoder.encode(validarSenhaCartao(request.novaSenha())));
+            cartaoCreditoRepository.save(cartao);
+        }
+    }
+
+    @Transactional
+    public FaturaResponseDTO consultarFatura(String cartaoId) {
+        CartaoDeCredito cartao = cartaoCreditoRepository.findById(cartaoId)
+                .orElseThrow(() -> new CartaoNaoEncontradaException("Cartão de crédito não encontrado"));
+
+        return new FaturaResponseDTO(
+                cartao.getFaturaAtual(),
+                cartao.getDataVencimento(),
+                cartao.getLimitePreAprovado());
+    }
+
 
 
 

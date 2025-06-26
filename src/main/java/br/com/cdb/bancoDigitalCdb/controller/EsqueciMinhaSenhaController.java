@@ -1,7 +1,7 @@
 package br.com.cdb.bancoDigitalCdb.controller;
 
-import br.com.cdb.bancoDigitalCdb.dto.AlterarSenha;
-import br.com.cdb.bancoDigitalCdb.dto.MailBody;
+import br.com.cdb.bancoDigitalCdb.dto.AlterarSenhaDTO;
+import br.com.cdb.bancoDigitalCdb.dto.MailBodyDTO;
 import br.com.cdb.bancoDigitalCdb.entity.Cliente;
 import br.com.cdb.bancoDigitalCdb.entity.EsqueciMinhaSenha;
 import br.com.cdb.bancoDigitalCdb.handler.CampoObrigatorioException;
@@ -43,7 +43,7 @@ public class EsqueciMinhaSenhaController {
         Cliente cliente = clienteRepository.findByEmail(email).orElseThrow(()-> new CampoObrigatorioException(email));
 
         int otp = geradorOTP();
-        MailBody mailBody = MailBody.builder()
+        MailBodyDTO mailBody = MailBodyDTO.builder()
                 .to(email)
                 .text("Este é o código OTP para a sua solicitação de recuperação de senha: " + otp)
                 .subject("Codigo OTP para redefinir a senha")
@@ -74,7 +74,7 @@ public class EsqueciMinhaSenhaController {
     }
 
     @PostMapping("/alterarSenha/{email}")
-    public  ResponseEntity<String> alterarSenha(@RequestBody AlterarSenha alterarSenha, @PathVariable String email){
+    public  ResponseEntity<String> alterarSenha(@RequestBody AlterarSenhaDTO alterarSenha, @PathVariable String email){
         if (!Objects.equals(alterarSenha.password(),alterarSenha.repetePassword())) {
             return new ResponseEntity<>("Por favor insira a senha novamente!", HttpStatus.EXPECTATION_FAILED);
         }

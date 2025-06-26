@@ -60,13 +60,13 @@ public class ContaService {
                 .orElseThrow(() -> new ContaNaoEncontradaException("Conta não encontrada"));
     }
     @Transactional
-    public SaldoResponse consultarSaldo(String contaId) {
+    public SaldoResponseDTO consultarSaldo(String contaId) {
         Conta conta = contaRepository.findById(contaId)
                 .orElseThrow(() -> new ContaNaoEncontradaException("Conta não encontrada"));
-        return new SaldoResponse(conta.getSaldo());
+        return new SaldoResponseDTO(conta.getSaldo());
     }
     @Transactional
-    public void realizarDeposito(String contaId, DepositoRequest request){
+    public void realizarDeposito(String contaId, DepositoRequestDTO request){
         Conta conta = contaRepository.findById(contaId)
                 .orElseThrow(() -> new ContaNaoEncontradaException("Conta não encontrada"));
         if (request.valor().compareTo(BigDecimal.ZERO) <= 0) {
@@ -76,7 +76,7 @@ public class ContaService {
         contaRepository.save(conta);
     }
     @Transactional
-    public void realizarSaque(String contaId, SaqueRequest request){
+    public void realizarSaque(String contaId, SaqueRequestDTO request){
         Conta conta = contaRepository.findById(contaId)
                 .orElseThrow(() -> new ContaNaoEncontradaException("Conta não encontrada"));
         if (request.valor().compareTo(BigDecimal.ZERO) <= 0) {
@@ -90,7 +90,7 @@ public class ContaService {
     }
 
     @Transactional
-    public void transferir(String contaOrigemId, TransferenciaRequest request){
+    public void transferir(String contaOrigemId, TransferenciaRequestDTO request){
         Conta origem = contaRepository.findById(contaOrigemId)
                 .orElseThrow(() -> new ContaNaoEncontradaException("Conta de origem não encontrada"));
         Conta destino = contaRepository.findById(request.destinoContaId())
@@ -108,7 +108,7 @@ public class ContaService {
     }
 
     @Transactional
-    public void fazerPix(String contaId, PixRequest request){
+    public void fazerPix(String contaId, PixRequestDTO request){
         Conta conta = contaRepository.findById(contaId)
                 .orElseThrow(() -> new ContaNaoEncontradaException("Conta não encontrada"));
         if (conta.getSaldo().compareTo(request.valor()) < 0) {

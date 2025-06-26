@@ -1,6 +1,6 @@
 package br.com.cdb.bancoDigitalCdb.service;
 
-import br.com.cdb.bancoDigitalCdb.dto.MailBody;
+import br.com.cdb.bancoDigitalCdb.dto.MailBodyDTO;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -17,7 +17,7 @@ public class EmailService {
         this.javaMailSender = javaMailSender;
     }
 
-    public void sendSimpleMessage(MailBody mailBody){
+    public void sendSimpleMessage(MailBodyDTO mailBody){
         SimpleMailMessage massage = new SimpleMailMessage();
         massage.setTo(mailBody.to());
         massage.setFrom(userNameSecret);

@@ -69,30 +69,30 @@ public class ContaController {
     @PostMapping("/{id}/deposito")
     public ResponseEntity<Void> realizarDeposito(
             @PathVariable String id,
-            @RequestBody DepositoRequest request) {
+            @RequestBody DepositoRequestDTO request) {
         contaService.realizarDeposito(id, request);
         return ResponseEntity.ok().build();
     }
     @GetMapping("/{id}/saldo")
-    public ResponseEntity<SaldoResponse> consultarSaldo(@PathVariable String id) {
+    public ResponseEntity<SaldoResponseDTO> consultarSaldo(@PathVariable String id) {
         return ResponseEntity.ok(contaService.consultarSaldo(id));
     }
 
     @PostMapping("/{id}/transferencia")
-    public ResponseEntity<Void> transferir(@PathVariable String id, @RequestBody TransferenciaRequest request) {
+    public ResponseEntity<Void> transferir(@PathVariable String id, @RequestBody TransferenciaRequestDTO request) {
         contaService.transferir(id, request);
         return ResponseEntity.ok().build();
 
     }
     @PostMapping("/{id}/pix")
-    public ResponseEntity<Void> realizarPix(@PathVariable String id, @RequestBody PixRequest pixRequest) {
+    public ResponseEntity<Void> realizarPix(@PathVariable String id, @RequestBody PixRequestDTO pixRequest) {
         contaService.fazerPix(id, pixRequest);
         return ResponseEntity.ok().build();
     }
     @PostMapping("/{id}/saque")
     public ResponseEntity<Void> realizarSaque(
             @PathVariable String id,
-            @RequestBody SaqueRequest request) {
+            @RequestBody SaqueRequestDTO request) {
         contaService.realizarSaque(id, request);
         return ResponseEntity.ok().build();
     }

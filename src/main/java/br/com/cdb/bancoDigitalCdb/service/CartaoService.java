@@ -14,7 +14,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 @Service
 public class CartaoService {
@@ -123,6 +126,15 @@ public class CartaoService {
 
         BigDecimal valorPagamento = request.valor();
         BigDecimal faturaAtual = cartao.getFaturaAtual();
+        BigDecimal limiteCredito = cartao.getLimitePreAprovado();
+
+        BigDecimal taxaAplicada = BigDecimal.ZERO;
+
+        if (aplicarTaxaUtilizacao(faturaAtual,limiteCredito)){
+            taxaAplicada = calcularTaxaUtilizacao(faturaAtual);
+            faturaAtual = faturaAtual.add(taxaAplicada);
+            cartao.setFaturaAtual(faturaAtual);
+        }
 
         if (valorPagamento.compareTo(faturaAtual) > 0) {
             throw new PagamentoFaturaException("Valor do pagamento não pode ser maior que o total da fatura");
@@ -142,7 +154,17 @@ public class CartaoService {
         fatura.setCartao(cartao);
         fatura.setValorPago(valorPagamento);
         fatura.setDataPagamento(LocalDate.now());
+        fatura.setTotalTaxas(taxaAplicada);
+
         faturaRepository.save(fatura);
+    }
+
+    private boolean aplicarTaxaUtilizacao(BigDecimal faturaAtual, BigDecimal limiteCredito) {
+        BigDecimal limite80 = limiteCredito.multiply(BigDecimal.valueOf(0.8));
+        return faturaAtual.compareTo(limite80) > 0;
+    }
+    private BigDecimal calcularTaxaUtilizacao(BigDecimal faturaAtual) {
+        return faturaAtual.multiply(BigDecimal.valueOf(0.05));
     }
 
     @Transactional
@@ -218,10 +240,24 @@ public class CartaoService {
         CartaoDeCredito cartao = cartaoCreditoRepository.findById(cartaoId)
                 .orElseThrow(() -> new CartaoNaoEncontradaException("Cartão de crédito não encontrado"));
 
+        List<PagamentoFaturaDTO> historico = new ArrayList<>();
+
+        if (cartao.getFaturas() != null){
+            historico = cartao.getFaturas().stream()
+                    .map(fatura -> new PagamentoFaturaDTO(
+                            fatura.getValorPago(),
+                            fatura.getDataPagamento(),
+                            fatura.getCartao().getNumero()
+                    ))
+                    .collect(Collectors.toList());
+        }
+
         return new FaturaResponseDTO(
                 cartao.getFaturaAtual(),
                 cartao.getDataVencimento(),
-                cartao.getLimitePreAprovado());
+                cartao.getLimitePreAprovado(),
+                historico
+                );
     }
 
 

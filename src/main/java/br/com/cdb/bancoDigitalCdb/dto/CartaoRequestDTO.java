@@ -7,6 +7,5 @@ import java.math.BigDecimal;
 public record CartaoRequestDTO(String contaId,
                                TipoCartao tipo,
                                String senha,
-                               BigDecimal limiteDiario,
-                               BigDecimal limiteCredito) {
+                               BigDecimal limiteDiario) {
 }

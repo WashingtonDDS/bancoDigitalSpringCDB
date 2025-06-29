@@ -83,6 +83,19 @@ public class CartaoService {
     }
 
     @Transactional
+    public CartaoDetalhesDTO detalhaCartao(String cartaoId){
+        if (cartaoId.startsWith("CD")){
+            CartaoDeDebito cartao = cartaoDebitoRepository.findById(cartaoId)
+                    .orElseThrow(() -> new CartaoNaoEncontradaException("Cartão de débito não encontrado"));
+            return CartaoDetalhesDTO.Debito(cartao);
+        } else {
+            CartaoDeCredito cartao = cartaoCreditoRepository.findById(cartaoId)
+                    .orElseThrow(() -> new CartaoNaoEncontradaException("Cartão de crédito não encontrado"));
+            return CartaoDetalhesDTO.Credito(cartao);
+        }
+    }
+
+    @Transactional
     public void realizarPagamentoComCartao(String cartaoId, PagamentoCartaoRequestDTO request){
         if (cartaoId.startsWith("CD")){
             CartaoDeDebito cartao = cartaoDebitoRepository.findById(cartaoId)

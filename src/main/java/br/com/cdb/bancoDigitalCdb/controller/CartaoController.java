@@ -7,6 +7,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+
+@RestController
+@RequestMapping("/cartoes")
 public class CartaoController {
 
     private final CartaoService cartaoService;
@@ -22,57 +25,57 @@ public class CartaoController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<CartaoDetalhesDTO>detalharCartao(@PathVariable String cartaoId){
-        return ResponseEntity.ok(cartaoService.detalhaCartao(cartaoId));
+    public ResponseEntity<CartaoDetalhesDTO>detalharCartao(@PathVariable String id){
+        return ResponseEntity.ok(cartaoService.detalhaCartao(id));
 
     }
 
     @PostMapping("/{id}/pagamento")
-    public ResponseEntity<Void>realizarPagamentoComCartao(@PathVariable String cartaoId, @RequestBody PagamentoCartaoRequestDTO request){
-        cartaoService.realizarPagamentoComCartao(cartaoId,request);
+    public ResponseEntity<Void>realizarPagamentoComCartao(@PathVariable String id, @RequestBody PagamentoCartaoRequestDTO request){
+        cartaoService.realizarPagamentoComCartao(id,request);
         return ResponseEntity.ok().build();
     }
 
     @PutMapping("/{id}/limite")
-    public ResponseEntity<Void>alterarLimiteCredito(@PathVariable String cartaoId, @RequestBody AlterarLimiteRequestDTO request){
-        cartaoService.alterarLimiteCredito(cartaoId,request);
+    public ResponseEntity<Void>alterarLimiteCredito(@PathVariable String id, @RequestBody AlterarLimiteRequestDTO request){
+        cartaoService.alterarLimiteCredito(id,request);
         return ResponseEntity.ok().build();
     }
 
     @PutMapping("/{id}/status")
     public ResponseEntity<Void> alterarStatus(
-            @PathVariable String cartaoId,
+            @PathVariable String id,
             @RequestBody AlterarStatusRequestDTO request) {
-        cartaoService.alterarStatus(cartaoId, request);
+        cartaoService.alterarStatus(id, request);
         return ResponseEntity.ok().build();
     }
 
     @PutMapping("/{id}/senha")
     public ResponseEntity<Void> alterarSenha(
-            @PathVariable String cartaoId,
+            @PathVariable String id,
             @RequestBody AlterarSenhaRequestDTO request) {
-        cartaoService.alterarSenha(cartaoId, request);
+        cartaoService.alterarSenha(id, request);
         return ResponseEntity.ok().build();
     }
 
     @GetMapping("/{id}/fatura")
-    public ResponseEntity<FaturaResponseDTO> consultarFatura(@PathVariable String cartaoId) {
-        return ResponseEntity.ok(cartaoService.consultarFatura(cartaoId));
+    public ResponseEntity<FaturaResponseDTO> consultarFatura(@PathVariable String id) {
+        return ResponseEntity.ok(cartaoService.consultarFatura(id));
     }
 
     @PostMapping("/{id}/fatura/pagamento")
     public ResponseEntity<Void> pagarFatura(
-            @PathVariable String cartaoId,
+            @PathVariable String id,
             @RequestBody PagamentoFaturaRequestDTO request) {
-        cartaoService.pagarFatura(cartaoId, request);
+        cartaoService.pagarFatura(id, request);
         return ResponseEntity.ok().build();
     }
 
     @PutMapping("/{id}/limite-diario")
     public ResponseEntity<Void> alterarLimiteDiario(
-            @PathVariable String cartaoId,
+            @PathVariable String id,
             @RequestBody AlterarLimiteRequestDTO request) {
-        cartaoService.alterarLimiteDiario(cartaoId, request);
+        cartaoService.alterarLimiteDiario(id, request);
         return ResponseEntity.ok().build();
     }
 

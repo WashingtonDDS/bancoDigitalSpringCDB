@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 @Entity
 @NoArgsConstructor
@@ -27,6 +28,12 @@ public class CartaoDeDebito {
     private String numero;
     private String senha;
     private BigDecimal limiteDiarioTransacao;
+
+    @Column(precision = 10, scale = 2)
+    private BigDecimal gastoDiarioAtual = BigDecimal.ZERO;
+
+    private LocalDate dataUltimaTransacao;
+
     private boolean ativoOuDesativo;
     private double taxaDeManutencao;
 

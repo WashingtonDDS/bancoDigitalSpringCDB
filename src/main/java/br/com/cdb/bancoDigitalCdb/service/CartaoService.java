@@ -36,10 +36,11 @@ public class CartaoService {
     }
 
     @Transactional
-    public CartaoResponseDTO emitirCartao(CartaoRequestDTO request){
+    public CartaoResponseDTO emitirCartao(CartaoRequestDTO request) {
         Conta conta = contaRepository.findById(request.contaId())
                 .orElseThrow(() -> new ContaNaoEncontradaException("Conta não encontrada"));
-        if (request.tipo()== TipoCartao.DEBITO){
+
+        if (request.tipo() == TipoCartao.DEBITO) {
             CartaoDeDebito cartao = new CartaoDeDebito();
             cartao.setNumero(gerarNumeroCartao());
             cartao.setSenha(passwordEncoder.encode(validarSenhaCartao(request.senha())));
@@ -47,17 +48,28 @@ public class CartaoService {
             cartao.setConta(conta);
             cartaoDebitoRepository.save(cartao);
             return new CartaoResponseDTO(cartao);
+        } else {
 
-        }else {
+            if (!(conta instanceof ContaCorrente)) {
+                throw new BusinessException("Cartão de crédito só pode ser associado a conta corrente");
+            }
+
+            ContaCorrente contaCorrente = (ContaCorrente) conta;
+            Cliente cliente = contaCorrente.getCliente();
+
             CartaoDeCredito cartao = new CartaoDeCredito();
             cartao.setNumero(gerarNumeroCartao());
             cartao.setSenha(passwordEncoder.encode(validarSenhaCartao(request.senha())));
 
-            BigDecimal limiteCredito = calcularLimitePorCliente(conta.getCliente());
+
+            BigDecimal limiteCredito = calcularLimitePorCliente(cliente);
             cartao.setLimitePreAprovado(limiteCredito);
+            cartao.setFaturaAtual(BigDecimal.ZERO);
 
             cartao.setDataVencimento(LocalDate.now().plusYears(3));
-            cartao.setContaCorrente((ContaCorrente) conta);
+            cartao.setContaCorrente(contaCorrente);
+            cartao.setCliente(cliente);
+
             cartaoCreditoRepository.save(cartao);
             return new CartaoResponseDTO(cartao);
         }
@@ -73,7 +85,7 @@ public class CartaoService {
     }
 
     private String validarSenhaCartao(String senha) {
-        if (senha == null || senha.length() < 8) {
+        if (senha == null || senha.length() < 4) {
             throw new BusinessException("Senha deve ter 4  Numeros");
         }
         return senha;
@@ -101,6 +113,16 @@ public class CartaoService {
             CartaoDeDebito cartao = cartaoDebitoRepository.findById(cartaoId)
                     .orElseThrow(()-> new CartaoNaoEncontradaException("Cartão de débito não encontrado"));
 
+            LocalDate hoje = LocalDate.now();
+            if (cartao.getDataUltimaTransacao() == null || !cartao.getDataUltimaTransacao().equals(hoje)) {
+                cartao.setGastoDiarioAtual(BigDecimal.ZERO);
+                cartao.setDataUltimaTransacao(hoje);
+            }
+            BigDecimal novoGastoDiario = cartao.getGastoDiarioAtual().add(request.valor());
+
+            if (novoGastoDiario.compareTo(cartao.getLimiteDiarioTransacao()) > 0) {
+                throw new LimiteExcedidoException("Limite diário excedido");
+            }
             if (!passwordEncoder.matches(request.senha(), cartao.getSenha())){
                 throw new SenhaIncorretaException("Senha incorreta");
             }
@@ -111,6 +133,10 @@ public class CartaoService {
             if (conta.getSaldo().compareTo(request.valor()) < 0){
                 throw new SaldoInsuficienteException("Saldo insuficiente para realizar o pagamento");
             }
+
+            conta.setSaldo(conta.getSaldo().subtract(request.valor()));
+            cartao.setGastoDiarioAtual(novoGastoDiario);
+
             conta.setSaldo(conta.getSaldo().subtract(request.valor()));
             contaRepository.save(conta);
         } else {
@@ -119,8 +145,13 @@ public class CartaoService {
             if (!passwordEncoder.matches(request.senha(), cartao.getSenha())){
                 throw new SenhaIncorretaException("Senha incorreta");
             }
+            BigDecimal limiteDisponivel = cartao.getLimitePreAprovado().subtract(cartao.getFaturaAtual());
 
-            if (cartao.getLimitePreAprovado().compareTo(request.valor()) < 0) {
+            if (cartao.getFaturaAtual().compareTo(cartao.getLimitePreAprovado()) > 0) {
+                throw new LimiteExcedidoException("Fatura excedeu o limite do cartão");
+            }
+
+            if (limiteDisponivel.compareTo(request.valor()) < 0) {
                 throw new LimiteExcedidoException("Limite indisponível");
             }
 
@@ -158,7 +189,9 @@ public class CartaoService {
         }
 
         conta .setSaldo(conta.getSaldo().subtract(valorPagamento));
-        cartao.setFaturaAtual(faturaAtual.subtract(valorPagamento));
+
+        BigDecimal novaFatura = faturaAtual.subtract(valorPagamento);
+        cartao.setFaturaAtual(novaFatura);
 
         contaRepository.save(conta);
         cartaoCreditoRepository.save(cartao);

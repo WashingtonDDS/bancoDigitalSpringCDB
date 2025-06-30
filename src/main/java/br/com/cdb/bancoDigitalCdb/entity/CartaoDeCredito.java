@@ -41,9 +41,17 @@ public class CartaoDeCredito {
 
     @PrePersist
     @PreUpdate
-    public void  validar(){
-        if (!contaCorrente.getCliente().equals(cliente)){
-            throw new IllegalStateException("Conta não pertence ao cliente");
+    public void validar() {
+        if (contaCorrente != null && cliente != null) {
+            if (!contaCorrente.getCliente().equals(cliente)) {
+                throw new IllegalStateException("Conta não pertence ao cliente");
+            }
+        }
+        else if (contaCorrente == null) {
+            throw new IllegalStateException("Conta corrente é obrigatória");
+        }
+        else if (cliente == null) {
+            throw new IllegalStateException("Cliente é obrigatório");
         }
     }
 

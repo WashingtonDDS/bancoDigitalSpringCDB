@@ -85,8 +85,8 @@ public class CartaoService {
     }
 
     private String validarSenhaCartao(String senha) {
-        if (senha == null || senha.length() < 4) {
-            throw new BusinessException("Senha deve ter 4  Numeros");
+        if (senha == null || !senha.matches("\\d{4}")) {
+            throw new BusinessException("Senha deve conter exatamente 4 dígitos numéricos");
         }
         return senha;
     }
@@ -255,28 +255,30 @@ public class CartaoService {
     }
 
     @Transactional
-    public void alterarSenha(String cartaoId, AlterarSenhaRequestDTO request){
+    public void alterarSenha(String cartaoId, AlterarSenhaRequestDTO request) {
         if (cartaoId.startsWith("CD")) {
             CartaoDeDebito cartao = cartaoDebitoRepository.findById(cartaoId)
                     .orElseThrow(() -> new CartaoNaoEncontradaException("Cartão de débito não encontrado"));
-            if (!passwordEncoder.matches(request.novaSenha(), cartao.getSenha())) {
+
+            if (!passwordEncoder.matches(request.senhaAtual(), cartao.getSenha())) {
                 throw new SenhaIncorretaException("Senha atual incorreta");
             }
-            if (!request.novaSenha().matches("\\d{4}")) {
-                throw new BusinessException("Senha deve conter 4 dígitos");
-            }
-            cartao.setSenha(passwordEncoder.encode(validarSenhaCartao(request.novaSenha())));
+
+            validarSenhaCartao(request.novaSenha());
+
+            cartao.setSenha(passwordEncoder.encode(request.novaSenha()));
             cartaoDebitoRepository.save(cartao);
         } else {
             CartaoDeCredito cartao = cartaoCreditoRepository.findById(cartaoId)
                     .orElseThrow(() -> new CartaoNaoEncontradaException("Cartão de crédito não encontrado"));
-            if (!passwordEncoder.matches(request.novaSenha(), cartao.getSenha())) {
+
+            if (!passwordEncoder.matches(request.senhaAtual(), cartao.getSenha())) {
                 throw new SenhaIncorretaException("Senha atual incorreta");
             }
-            if (!request.novaSenha().matches("\\d{4}")) {
-                throw new BusinessException("Senha deve conter 4 dígitos");
-            }
-            cartao.setSenha(passwordEncoder.encode(validarSenhaCartao(request.novaSenha())));
+
+            validarSenhaCartao(request.novaSenha());
+
+            cartao.setSenha(passwordEncoder.encode(request.novaSenha()));
             cartaoCreditoRepository.save(cartao);
         }
     }

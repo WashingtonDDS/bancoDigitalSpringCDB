@@ -2,6 +2,7 @@ package br.com.cdb.bancoDigitalCdb.service;
 
 import br.com.cdb.bancoDigitalCdb.dto.ContratarSeguroRequestDTO;
 import br.com.cdb.bancoDigitalCdb.dto.SeguroDetalhesDTO;
+import br.com.cdb.bancoDigitalCdb.dto.SeguroDisponivelDTO;
 import br.com.cdb.bancoDigitalCdb.dto.SeguroResponseDTO;
 import br.com.cdb.bancoDigitalCdb.entity.CartaoDeCredito;
 import br.com.cdb.bancoDigitalCdb.entity.Seguro;
@@ -15,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -56,13 +58,32 @@ public class SeguroService {
                     new BigDecimal("50.00");
         };
     }
+    public List<SeguroDisponivelDTO> listarSegurosDisponiveis() {
+        List<SeguroDisponivelDTO> seguros = new ArrayList<>();
+
+        seguros.add(new SeguroDisponivelDTO(
+                "VIAGEM",
+                "Seguro para Viagens",
+                "Cobre despesas médicas, extravio de bagagem e cancelamentos",
+                new BigDecimal("50.00")
+        ));
+
+        seguros.add(new SeguroDisponivelDTO(
+                "FRAUDE",
+                "Proteção contra Fraudes",
+                "Cobre transações não autorizadas até R$ 5.000,00",
+                BigDecimal.ZERO
+        ));
+
+        return seguros;
+    }
 
     public SeguroDetalhesDTO detalharSeguro(String id){
         Seguro seguro = seguroRepository.findById(id)
                 .orElseThrow(() -> new SeguroNaoEncontradoException("Seguro não encontrado"));
 
         BigDecimal valorCobertura = (seguro.getTipo() == TipoSeguro.FRAUDE) ?
-                new BigDecimal("100000.00") : null;
+                new BigDecimal("5000.00") : null;
 
         return new SeguroDetalhesDTO(
                 seguro.getId(),

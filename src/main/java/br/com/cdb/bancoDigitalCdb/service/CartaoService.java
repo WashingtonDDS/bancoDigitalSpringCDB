@@ -26,13 +26,15 @@ public class CartaoService {
     private final ContaRepository contaRepository;
     private final FaturaRepository faturaRepository;
     private final PasswordEncoder passwordEncoder;
+    private final SeguroService seguroService;
 
-    public CartaoService(CartaoDebitoRepository cartaoDebitoRepository, CartaoCreditoRepository cartaoCreditoRepository, ContaRepository contaRepository, FaturaRepository faturaRepository, PasswordEncoder passwordEncoder) {
+    public CartaoService(CartaoDebitoRepository cartaoDebitoRepository, CartaoCreditoRepository cartaoCreditoRepository, ContaRepository contaRepository, FaturaRepository faturaRepository, PasswordEncoder passwordEncoder, SeguroService seguroService) {
         this.cartaoDebitoRepository = cartaoDebitoRepository;
         this.cartaoCreditoRepository = cartaoCreditoRepository;
         this.contaRepository = contaRepository;
         this.faturaRepository = faturaRepository;
         this.passwordEncoder = passwordEncoder;
+        this.seguroService = seguroService;
     }
 
     @Transactional
@@ -71,8 +73,16 @@ public class CartaoService {
             cartao.setCliente(cliente);
 
             cartaoCreditoRepository.save(cartao);
+            criarSeguroFraudeAutomatico(cartao);
             return new CartaoResponseDTO(cartao);
         }
+    }
+    private void criarSeguroFraudeAutomatico(CartaoDeCredito cartao) {
+        ContratarSeguroRequestDTO request = new ContratarSeguroRequestDTO(
+                cartao.getId(),
+                TipoSeguro.FRAUDE
+        );
+        seguroService.contratarSeguro(request);
     }
 
     private BigDecimal calcularLimitePorCliente(Cliente cliente){

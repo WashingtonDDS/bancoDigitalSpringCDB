@@ -1,5 +1,6 @@
 package br.com.cdb.bancoDigitalCdb.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -31,6 +32,7 @@ public class Seguro {
 
     @ManyToOne
     @JoinColumn(name = "cartao_id")
+    @JsonBackReference
     private CartaoDeCredito cartao;
 
     @PrePersist

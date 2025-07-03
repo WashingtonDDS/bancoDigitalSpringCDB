@@ -4,10 +4,7 @@ package br.com.cdb.bancoDigitalCdb.service;
 import br.com.cdb.bancoDigitalCdb.dto.*;
 import br.com.cdb.bancoDigitalCdb.entity.*;
 import br.com.cdb.bancoDigitalCdb.handler.*;
-import br.com.cdb.bancoDigitalCdb.repository.CartaoCreditoRepository;
-import br.com.cdb.bancoDigitalCdb.repository.CartaoDebitoRepository;
-import br.com.cdb.bancoDigitalCdb.repository.ContaRepository;
-import br.com.cdb.bancoDigitalCdb.repository.FaturaRepository;
+import br.com.cdb.bancoDigitalCdb.repository.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,14 +24,16 @@ public class CartaoService {
     private final FaturaRepository faturaRepository;
     private final PasswordEncoder passwordEncoder;
     private final SeguroService seguroService;
+    private final SeguroRepository seguroRepository;
 
-    public CartaoService(CartaoDebitoRepository cartaoDebitoRepository, CartaoCreditoRepository cartaoCreditoRepository, ContaRepository contaRepository, FaturaRepository faturaRepository, PasswordEncoder passwordEncoder, SeguroService seguroService) {
+    public CartaoService(CartaoDebitoRepository cartaoDebitoRepository, CartaoCreditoRepository cartaoCreditoRepository, ContaRepository contaRepository, FaturaRepository faturaRepository, PasswordEncoder passwordEncoder, SeguroService seguroService, SeguroRepository seguroRepository) {
         this.cartaoDebitoRepository = cartaoDebitoRepository;
         this.cartaoCreditoRepository = cartaoCreditoRepository;
         this.contaRepository = contaRepository;
         this.faturaRepository = faturaRepository;
         this.passwordEncoder = passwordEncoder;
         this.seguroService = seguroService;
+        this.seguroRepository = seguroRepository;
     }
 
     @Transactional
@@ -74,15 +73,24 @@ public class CartaoService {
 
             cartaoCreditoRepository.save(cartao);
             criarSeguroFraudeAutomatico(cartao);
+
+            if (request instanceof CartaoRequestDTO creditoRequest &&
+                    creditoRequest.adquirirSeguroViagem()) {
+                seguroService.contratarSeguroViagem(cartao.getId());
+            }
+
             return new CartaoResponseDTO(cartao);
         }
     }
     private void criarSeguroFraudeAutomatico(CartaoDeCredito cartao) {
-        ContratarSeguroRequestDTO request = new ContratarSeguroRequestDTO(
-                cartao.getId(),
-                TipoSeguro.FRAUDE
-        );
-        seguroService.contratarSeguro(request);
+        Seguro seguro = Seguro.builder()
+                .tipo(TipoSeguro.FRAUDE)
+                .dataContratacao(LocalDate.now())
+                .valorMensal(BigDecimal.ZERO)
+                .cartao(cartao)
+                .build();
+
+        seguroRepository.save(seguro);
     }
 
     private BigDecimal calcularLimitePorCliente(Cliente cliente){
@@ -100,8 +108,14 @@ public class CartaoService {
         }
         return senha;
     }
-    private String gerarNumeroCartao(){
-        return "5" + String.format("%015d", new Random().nextLong() % 1000000000000000L);
+    private String gerarNumeroCartao() {
+        Random random = new Random();
+        StringBuilder sb = new StringBuilder();
+
+        for (int i = 0; i < 16; i++) {
+            sb.append(random.nextInt(10));
+        }
+        return sb.toString();
     }
 
     @Transactional

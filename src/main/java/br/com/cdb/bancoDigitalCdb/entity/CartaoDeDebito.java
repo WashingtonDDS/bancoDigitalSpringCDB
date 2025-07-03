@@ -5,6 +5,7 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Random;
 
 @Entity
 @NoArgsConstructor
@@ -25,7 +26,9 @@ public class CartaoDeDebito {
     @JoinColumn(name = "cliente_id")
     private Cliente cliente;
 
+    @Column(unique = true, length = 16)
     private String numero;
+
     private String senha;
     private BigDecimal limiteDiarioTransacao;
 
@@ -44,5 +47,6 @@ public class CartaoDeDebito {
             throw new IllegalStateException("Conta não pertence ao cliente");
         }
     }
+
 
 }

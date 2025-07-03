@@ -1,13 +1,10 @@
 package br.com.cdb.bancoDigitalCdb.service;
 
-import br.com.cdb.bancoDigitalCdb.dto.ContratarSeguroRequestDTO;
+import br.com.cdb.bancoDigitalCdb.dto.ContratarSeguroDTO;
 import br.com.cdb.bancoDigitalCdb.dto.SeguroDetalhesDTO;
 import br.com.cdb.bancoDigitalCdb.dto.SeguroDisponivelDTO;
 import br.com.cdb.bancoDigitalCdb.dto.SeguroResponseDTO;
-import br.com.cdb.bancoDigitalCdb.entity.CartaoDeCredito;
-import br.com.cdb.bancoDigitalCdb.entity.Seguro;
-import br.com.cdb.bancoDigitalCdb.entity.TipoCliente;
-import br.com.cdb.bancoDigitalCdb.entity.TipoSeguro;
+import br.com.cdb.bancoDigitalCdb.entity.*;
 import br.com.cdb.bancoDigitalCdb.handler.*;
 import br.com.cdb.bancoDigitalCdb.repository.CartaoCreditoRepository;
 import br.com.cdb.bancoDigitalCdb.repository.SeguroRepository;
@@ -22,8 +19,11 @@ import java.util.List;
 @Service
 public class SeguroService {
 
+    private static final BigDecimal TAXA_VIAGEM = new BigDecimal("50.00");
+
     private final SeguroRepository seguroRepository;
     private final CartaoCreditoRepository cartaoCreditoRepository;
+
 
     public SeguroService(SeguroRepository seguroRepository, CartaoCreditoRepository cartaoCreditoRepository) {
         this.seguroRepository = seguroRepository;
@@ -31,33 +31,31 @@ public class SeguroService {
     }
 
     @Transactional
-    public SeguroResponseDTO contratarSeguro(ContratarSeguroRequestDTO request){
-        CartaoDeCredito cartao = cartaoCreditoRepository.findById(request.cartaoId())
+    public SeguroResponseDTO contratarSeguroViagem(String cartaoId) {
+        CartaoDeCredito cartao = cartaoCreditoRepository.findCartaoComCliente(cartaoId)
                 .orElseThrow(() -> new CartaoNaoEncontradaException("Cartão não encontrado"));
-        if (seguroRepository.existsAtivoByCartaoIdAndTipo(request.cartaoId(),request.tipo())){
-            throw new SeguroAtivoException("Este seguro já está ativo para o cartão");
+
+        if (seguroRepository.existsAtivoByCartaoIdAndTipo(cartaoId, TipoSeguro.VIAGEM)) {
+            throw new SeguroAtivoException("Seguro viagem já está ativo para este cartão");
         }
 
-        BigDecimal valorMensal = calcularValorMensal(request.tipo(),cartao.getContaCorrente().getCliente().getTipoCliente());
         Seguro seguro = Seguro.builder()
-                .tipo(request.tipo())
+                .tipo(TipoSeguro.VIAGEM)
                 .dataContratacao(LocalDate.now())
-                .valorMensal(valorMensal)
+                .valorMensal(calcularTaxaViagem(cartao.getContaCorrente().getCliente()))
                 .cartao(cartao)
                 .build();
 
-        seguro = seguroRepository.save(seguro);
-        return mapToDto(seguro);
+        return mapToDto(seguroRepository.save(seguro));
     }
 
-    private BigDecimal calcularValorMensal(TipoSeguro tipo, TipoCliente tipoCliente) {
-        return switch (tipo) {
-            case FRAUDE -> BigDecimal.ZERO;
-            case VIAGEM -> tipoCliente == TipoCliente.PREMIUM ?
-                    BigDecimal.ZERO :
-                    new BigDecimal("50.00");
-        };
+
+    private BigDecimal calcularTaxaViagem(Cliente cliente) {
+        return cliente.getTipoCliente() == TipoCliente.PREMIUM
+                ? BigDecimal.ZERO
+                : TAXA_VIAGEM;
     }
+
     public List<SeguroDisponivelDTO> listarSegurosDisponiveis() {
         List<SeguroDisponivelDTO> seguros = new ArrayList<>();
 

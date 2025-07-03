@@ -1,5 +1,6 @@
 package br.com.cdb.bancoDigitalCdb.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -26,6 +27,7 @@ public class Fatura {
 
     @ManyToOne
     @JoinColumn(name = "cartao_id")
+    @JsonIgnore
     private CartaoDeCredito cartao;
 
 

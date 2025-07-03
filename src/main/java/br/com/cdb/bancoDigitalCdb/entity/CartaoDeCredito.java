@@ -1,11 +1,14 @@
 package br.com.cdb.bancoDigitalCdb.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Random;
 
 @Entity
 @NoArgsConstructor
@@ -21,6 +24,7 @@ public class CartaoDeCredito {
 
     @OneToOne
     @JoinColumn(name = "conta_corrente_id")
+    @JsonIgnore
     private ContaCorrente contaCorrente;
 
     @ManyToOne
@@ -30,7 +34,13 @@ public class CartaoDeCredito {
     @OneToMany(mappedBy = "cartao")
     private List<Fatura> faturas;
 
+    @OneToMany(mappedBy = "cartao")
+    @JsonManagedReference
+    private List<Seguro> seguros;
+
+    @Column(unique = true, length = 16)
     private String numero;
+
     private String senha;
     private BigDecimal faturaAtual = BigDecimal.ZERO;;
     private BigDecimal limitePreAprovado;
@@ -54,5 +64,6 @@ public class CartaoDeCredito {
             throw new IllegalStateException("Cliente é obrigatório");
         }
     }
+
 
 }

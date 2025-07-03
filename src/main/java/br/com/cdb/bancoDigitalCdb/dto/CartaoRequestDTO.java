@@ -7,5 +7,6 @@ import java.math.BigDecimal;
 public record CartaoRequestDTO(String contaId,
                                TipoCartao tipo,
                                String senha,
+                               boolean adquirirSeguroViagem ,
                                BigDecimal limiteDiario) {
 }

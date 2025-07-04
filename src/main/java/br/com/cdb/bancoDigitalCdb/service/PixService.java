@@ -22,29 +22,36 @@ public class PixService {
     }
     @Transactional
     public void processarPix(Conta contaOrigem, String cpfDestino, BigDecimal valor) {
-        if (valor.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new BusinessException("Valor do Pix deve ser positivo");
+        try {
+            if (valor.compareTo(BigDecimal.ZERO) <= 0) {
+                throw new BusinessException("Valor do Pix deve ser positivo");
+            }
+
+            if (contaOrigem.getSaldo().compareTo(valor) < 0) {
+                throw new BusinessException("Saldo insuficiente");
+            }
+
+            Cliente clienteDestino = clienteRepository.findByCpf(cpfDestino)
+                    .orElseThrow(() -> new BusinessException("Cliente destino não encontrado"));
+
+            List<Conta> contasDestino = contaRepository.findByClienteId(clienteDestino.getId());
+
+            if (contasDestino.isEmpty()) {
+                throw new BusinessException("Conta destino não encontrada para o cliente");
+            }
+            Conta contaDestino = contasDestino.get(0);
+
+            contaOrigem.setSaldo(contaOrigem.getSaldo().subtract(valor));
+            contaDestino.setSaldo(contaDestino.getSaldo().add(valor));
+
+            contaRepository.save(contaOrigem);
+            contaRepository.save(contaDestino);
+        } catch (BusinessException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new BusinessException("Erro ao processar PIX: " + e.getMessage());
         }
 
-        if (contaOrigem.getSaldo().compareTo(valor) < 0) {
-            throw new BusinessException("Saldo insuficiente");
-        }
-
-        Cliente clienteDestino = clienteRepository.findByCpf(cpfDestino)
-                .orElseThrow(() -> new BusinessException("Cliente destino não encontrado"));
-
-        List<Conta> contasDestino = contaRepository.findByClienteId(clienteDestino.getId());
-
-        if (contasDestino.isEmpty()) {
-            throw new BusinessException("Conta destino não encontrada para o cliente");
-        }
-        Conta contaDestino = contasDestino.get(0);
-
-        contaOrigem.setSaldo(contaOrigem.getSaldo().subtract(valor));
-        contaDestino.setSaldo(contaDestino.getSaldo().add(valor));
-
-        contaRepository.save(contaOrigem);
-        contaRepository.save(contaDestino);
 
     }
 }

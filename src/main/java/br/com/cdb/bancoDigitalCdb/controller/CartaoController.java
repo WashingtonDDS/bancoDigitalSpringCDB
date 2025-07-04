@@ -81,5 +81,10 @@ public class CartaoController {
         cartaoService.alterarLimiteDiario(id, request);
         return ResponseEntity.ok().build();
     }
+    @DeleteMapping("/{cartaoId}")
+    public ResponseEntity<Void> cancelarCartao(@PathVariable String cartaoId) {
+        cartaoService.cancelarCartao(cartaoId);
+        return ResponseEntity.noContent().build();
+    }
 
 }

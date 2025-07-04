@@ -32,21 +32,28 @@ public class SeguroService {
 
     @Transactional
     public SeguroResponseDTO contratarSeguroViagem(String cartaoId) {
-        CartaoDeCredito cartao = cartaoCreditoRepository.findCartaoComCliente(cartaoId)
-                .orElseThrow(() -> new CartaoNaoEncontradaException("Cartão não encontrado"));
+        try {
+            CartaoDeCredito cartao = cartaoCreditoRepository.findCartaoComCliente(cartaoId)
+                    .orElseThrow(() -> new CartaoNaoEncontradaException("Cartão não encontrado"));
 
-        if (seguroRepository.existsAtivoByCartaoIdAndTipo(cartaoId, TipoSeguro.VIAGEM)) {
-            throw new SeguroAtivoException("Seguro viagem já está ativo para este cartão");
+            if (seguroRepository.existsAtivoByCartaoIdAndTipo(cartaoId, TipoSeguro.VIAGEM)) {
+                throw new SeguroAtivoException("Seguro viagem já está ativo para este cartão");
+            }
+
+            Seguro seguro = Seguro.builder()
+                    .tipo(TipoSeguro.VIAGEM)
+                    .dataContratacao(LocalDate.now())
+                    .valorMensal(calcularTaxaViagem(cartao.getContaCorrente().getCliente()))
+                    .cartao(cartao)
+                    .build();
+
+            return mapToDto(seguroRepository.save(seguro));
+        }catch (CartaoNaoEncontradaException | SeguroAtivoException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new BusinessException("Erro ao contratar seguro viagem: " + e.getMessage());
         }
 
-        Seguro seguro = Seguro.builder()
-                .tipo(TipoSeguro.VIAGEM)
-                .dataContratacao(LocalDate.now())
-                .valorMensal(calcularTaxaViagem(cartao.getContaCorrente().getCliente()))
-                .cartao(cartao)
-                .build();
-
-        return mapToDto(seguroRepository.save(seguro));
     }
 
 
@@ -57,79 +64,104 @@ public class SeguroService {
     }
 
     public List<SeguroDisponivelDTO> listarSegurosDisponiveis() {
-        List<SeguroDisponivelDTO> seguros = new ArrayList<>();
+        try {
+            List<SeguroDisponivelDTO> seguros = new ArrayList<>();
 
-        seguros.add(new SeguroDisponivelDTO(
-                "VIAGEM",
-                "Seguro para Viagens",
-                "Cobre despesas médicas, extravio de bagagem e cancelamentos",
-                new BigDecimal("50.00")
-        ));
+            seguros.add(new SeguroDisponivelDTO(
+                    "VIAGEM",
+                    "Seguro para Viagens",
+                    "Cobre despesas médicas, extravio de bagagem e cancelamentos",
+                    new BigDecimal("50.00")
+            ));
 
-        seguros.add(new SeguroDisponivelDTO(
-                "FRAUDE",
-                "Proteção contra Fraudes",
-                "Cobre transações não autorizadas até R$ 5.000,00",
-                BigDecimal.ZERO
-        ));
+            seguros.add(new SeguroDisponivelDTO(
+                    "FRAUDE",
+                    "Proteção contra Fraudes",
+                    "Cobre transações não autorizadas até R$ 5.000,00",
+                    BigDecimal.ZERO
+            ));
 
-        return seguros;
+            return seguros;
+        }catch (Exception e) {
+            throw new BusinessException("Erro ao listar seguros disponíveis: " + e.getMessage());
+        }
+
     }
 
     public SeguroDetalhesDTO detalharSeguro(String id){
-        Seguro seguro = seguroRepository.findById(id)
-                .orElseThrow(() -> new SeguroNaoEncontradoException("Seguro não encontrado"));
+        try {
+            Seguro seguro = seguroRepository.findById(id)
+                    .orElseThrow(() -> new SeguroNaoEncontradoException("Seguro não encontrado"));
 
-        BigDecimal valorCobertura = (seguro.getTipo() == TipoSeguro.FRAUDE) ?
-                new BigDecimal("5000.00") : null;
+            BigDecimal valorCobertura = (seguro.getTipo() == TipoSeguro.FRAUDE) ?
+                    new BigDecimal("5000.00") : null;
 
-        return new SeguroDetalhesDTO(
-                seguro.getId(),
-                seguro.getNumeroApolice(),
-                seguro.getTipo(),
-                seguro.getDataContratacao(),
-                seguro.getDataCancelamento(),
-                seguro.getValorMensal(),
-                seguro.getCartao().getId(),
-                valorCobertura,
-                seguro.getCartao().getContaCorrente().getCliente().getTipoCliente().name()
-        );
-
+            return new SeguroDetalhesDTO(
+                    seguro.getId(),
+                    seguro.getNumeroApolice(),
+                    seguro.getTipo(),
+                    seguro.getDataContratacao(),
+                    seguro.getDataCancelamento(),
+                    seguro.getValorMensal(),
+                    seguro.getCartao().getId(),
+                    valorCobertura,
+                    seguro.getCartao().getContaCorrente().getCliente().getTipoCliente().name()
+            );
+        }catch (SeguroNaoEncontradoException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new BusinessException("Erro ao detalhar seguro: " + e.getMessage());
+        }
     }
 
     public List<SeguroResponseDTO>listarSegurosPorCartao(String cartaoId){
-        return seguroRepository.findByCartaoId(cartaoId).stream()
-                .map(this::mapToDto)
-                .toList();
+        try {
+            return seguroRepository.findByCartaoId(cartaoId).stream()
+                    .map(this::mapToDto)
+                    .toList();
+        } catch (Exception e) {
+            throw new BusinessException("Erro ao listar seguros do cartão: " + e.getMessage());
+        }
     }
 
     @Transactional
     public void cancelarSeguro(String id) {
-        Seguro seguro = seguroRepository.findById(id)
-                .orElseThrow(() -> new SeguroNaoEncontradoException("Seguro não encontrado"));
+        try {
+            Seguro seguro = seguroRepository.findById(id)
+                    .orElseThrow(() -> new SeguroNaoEncontradoException("Seguro não encontrado"));
 
-        if (seguro.getTipo() == TipoSeguro.FRAUDE) {
-            throw new OperacaoNaoPermitidaException("Seguro de fraude não pode ser cancelado");
+            if (seguro.getTipo() == TipoSeguro.FRAUDE) {
+                throw new OperacaoNaoPermitidaException("Seguro de fraude não pode ser cancelado");
+            }
+
+            if (seguro.getDataCancelamento() != null) {
+                throw new SeguroJaCanceladoException("Seguro já cancelado anteriormente");
+            }
+
+            seguro.setDataCancelamento(LocalDate.now());
+            seguroRepository.save(seguro);
+        }catch (SeguroNaoEncontradoException | OperacaoNaoPermitidaException | SeguroJaCanceladoException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new BusinessException("Erro ao cancelar seguro: " + e.getMessage());
         }
 
-        if (seguro.getDataCancelamento() != null) {
-            throw new SeguroJaCanceladoException("Seguro já cancelado anteriormente");
-        }
-
-        seguro.setDataCancelamento(LocalDate.now());
-        seguroRepository.save(seguro);
     }
 
     private SeguroResponseDTO mapToDto(Seguro seguro) {
-        return new SeguroResponseDTO(
-                seguro.getId(),
-                seguro.getNumeroApolice(),
-                seguro.getTipo(),
-                seguro.getDataContratacao(),
-                seguro.getDataCancelamento(),
-                seguro.getValorMensal(),
-                seguro.getCartao().getId()
-        );
+        try {
+            return new SeguroResponseDTO(
+                    seguro.getId(),
+                    seguro.getNumeroApolice(),
+                    seguro.getTipo(),
+                    seguro.getDataContratacao(),
+                    seguro.getDataCancelamento(),
+                    seguro.getValorMensal(),
+                    seguro.getCartao().getId()
+            );
+        } catch (Exception e) {
+            throw new BusinessException("Erro ao converter seguro para DTO: " + e.getMessage());
+        }
     }
 
 }

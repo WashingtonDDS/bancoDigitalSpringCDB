@@ -8,6 +8,7 @@ import br.com.cdb.bancoDigitalCdb.entity.Endereco;
 import br.com.cdb.bancoDigitalCdb.handler.BusinessException;
 import br.com.cdb.bancoDigitalCdb.repository.ClienteRepository;
 import br.com.cdb.bancoDigitalCdb.repository.ContaRepository;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -32,6 +33,9 @@ public class ClienteService {
     }
 
     public Cliente criarClienteComEndereco(RegisterRequestDTO request){
+        if (request == null) {
+            throw new IllegalArgumentException("Request não pode ser nulo");
+        }
 
         Endereco endereco;
         if (request.endereco().getCep() != null && !request.endereco().getCep().isBlank()){
@@ -57,7 +61,6 @@ public class ClienteService {
         newCliente.setEndereco(endereco);
         newCliente.setTipoCliente(request.tipoCliente());
         newCliente.setRole(request.role());
-        newCliente.setTipoDeConta(request.tipoDeConta());
 
         return clienteRepository.save(newCliente);
     }
@@ -129,6 +132,11 @@ public class ClienteService {
 
         return clienteRepository.save(cliente);
     }
+    public Cliente buscarClientePorId(String id) {
+        return clienteRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Cliente não encontrado com ID: " + id));
+    }
+
     public void deleteCliente(String id) {
         Cliente cliente = clienteRepository.findById(id)
                 .orElseThrow(() -> new BusinessException("Cliente não encontrado"));

@@ -2,5 +2,6 @@ package br.com.cdb.bancoDigitalCdb.entity;
 
 public enum TipoDeConta {
     CORRENTE,
-    POUPANCA
+    POUPANCA,
+    CORRENTE_POUPANCA
 }

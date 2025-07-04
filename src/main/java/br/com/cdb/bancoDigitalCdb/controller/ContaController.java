@@ -4,6 +4,8 @@ import br.com.cdb.bancoDigitalCdb.dto.*;
 import br.com.cdb.bancoDigitalCdb.entity.*;
 
 
+import br.com.cdb.bancoDigitalCdb.repository.ClienteRepository;
+import br.com.cdb.bancoDigitalCdb.repository.ContaRepository;
 import br.com.cdb.bancoDigitalCdb.security.TokenService;
 
 import br.com.cdb.bancoDigitalCdb.service.ClienteService;
@@ -25,6 +27,8 @@ public class ContaController {
     private final TokenService tokenService;
     private final ContaService contaService;
     private final ClienteService clienteService;
+    private final ClienteRepository clienteRepository;
+    private final ContaRepository contaRepository;
 
 
 
@@ -33,12 +37,24 @@ public class ContaController {
         try {
             Cliente newCliente = clienteService.criarClienteComEndereco(body);
 
-            if (body.tipoDeConta() == TipoDeConta.CORRENTE){
-                ContaCorrente contaCorrente = contaService.criarContaCorrente(newCliente);
-            } else if (body.tipoDeConta() == TipoDeConta.POUPANCA) {
-                ContaPoupanca contaPoupanca = contaService.criarContaPoupanca(newCliente);
+            boolean temCorrente = Boolean.TRUE.equals(body.criarContaCorrente());
+            boolean temPoupanca = Boolean.TRUE.equals(body.criarContaPoupanca());
+
+            if (temCorrente) {
+                contaService.criarContaCorrente(newCliente);
+            }
+            if (temPoupanca) {
+                contaService.criarContaPoupanca(newCliente);
             }
 
+            if (temCorrente && temPoupanca) {
+                newCliente.setTipoDeConta(TipoDeConta.CORRENTE_POUPANCA);
+            } else if (temCorrente) {
+                newCliente.setTipoDeConta(TipoDeConta.CORRENTE);
+            } else if (temPoupanca) {
+                newCliente.setTipoDeConta(TipoDeConta.POUPANCA);
+            }
+            clienteRepository.save(newCliente);
             String token = this.tokenService.generateToken(newCliente);
             return ResponseEntity.ok(new ResponseDTO(newCliente.getNome(),token));
         }catch (Exception e){
@@ -54,6 +70,41 @@ public class ContaController {
             return ResponseEntity.ok(new ResponseDTO(cliente.getNome(),token));
         }catch (RuntimeException e){
             return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+    @PostMapping("/clientes/{clienteId}/contas")
+    public ResponseEntity<String> adicionarConta(
+            @PathVariable String clienteId,
+            @RequestBody CriarContaRequest request
+    ) {
+        try {
+            Cliente cliente = clienteService.buscarClientePorId(clienteId);
+            boolean temContaCorrenteAntes = contaRepository.existsByClienteAndTipo(cliente, ContaCorrente.class);
+            boolean temContaPoupancaAntes = contaRepository.existsByClienteAndTipo(cliente, ContaPoupanca.class);
+
+            if (request.tipoDeConta() == TipoDeConta.CORRENTE) {
+                contaService.criarContaCorrente(cliente);
+            } else if (request.tipoDeConta() == TipoDeConta.POUPANCA) {
+                contaService.criarContaPoupanca(cliente);
+            }
+
+            boolean temCorrente = contaRepository.existsByClienteAndTipo(cliente, ContaCorrente.class);
+            boolean temPoupanca = contaRepository.existsByClienteAndTipo(cliente, ContaPoupanca.class);
+
+            if (temCorrente && temPoupanca) {
+                cliente.setTipoDeConta(TipoDeConta.CORRENTE_POUPANCA);
+            } else if (temCorrente) {
+                cliente.setTipoDeConta(TipoDeConta.CORRENTE);
+            } else if (temPoupanca) {
+                cliente.setTipoDeConta(TipoDeConta.POUPANCA);
+            }
+
+            clienteRepository.save(cliente);
+
+
+            return ResponseEntity.ok("Conta adicionada com sucesso!");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Erro ao adicionar conta: " + e.getMessage());
         }
     }
     @GetMapping("/contas")

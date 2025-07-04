@@ -13,6 +13,7 @@ import java.math.BigDecimal;
 @Setter
 @Getter
 @Inheritance(strategy = InheritanceType.JOINED)
+@DiscriminatorColumn(name = "tipo_conta")
 public abstract class Conta {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

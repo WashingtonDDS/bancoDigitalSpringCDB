@@ -34,20 +34,26 @@ public class ContaService {
     }
 
     public ContaPoupanca criarContaPoupanca(Cliente cliente) {
+        if (contaRepository.existsByClienteAndTipo(cliente, ContaPoupanca.class)) {
+            throw new BusinessException("Cliente já tem conta poupança");
+        }
         ContaPoupanca contaPoupanca = new ContaPoupanca();
         contaPoupanca.setCliente(cliente);
         contaPoupanca.setNumeroDaConta(gerarNumeroDaConta());
         contaPoupanca.setSaldo(BigDecimal.ZERO);
-        contaPoupanca.setRendimento(0.0);
+        contaPoupanca.setRendimento(BigDecimal.ZERO);
         return (ContaPoupanca) contaRepository.save(contaPoupanca);
     }
 
     public ContaCorrente criarContaCorrente(Cliente cliente) {
+        if (contaRepository.existsByClienteAndTipo(cliente, ContaCorrente.class)) {
+            throw new BusinessException("Cliente já tem conta corrente");
+        }
         ContaCorrente contaCorrente = new ContaCorrente();
         contaCorrente.setCliente(cliente);
         contaCorrente.setNumeroDaConta(gerarNumeroDaConta());
         contaCorrente.setSaldo(BigDecimal.ZERO);
-        contaCorrente.setTaxaDeManutencao(0.0);
+        contaCorrente.setTaxaDeManutencao(BigDecimal.ZERO);
         return (ContaCorrente) contaRepository.save(contaCorrente);
     }
 
@@ -146,6 +152,8 @@ public class ContaService {
             throw new SaldoInsuficienteException("Saldo insuficiente para aplicar a taxa de manutenção");
         }
 
+        conta.setTaxaDeManutencao(taxa);
+        conta.setSaldo(conta.getSaldo().add(taxa));
         conta.setSaldo(conta.getSaldo().subtract(taxa));
         contaRepository.save(conta);
     }
@@ -178,6 +186,9 @@ public class ContaService {
 
         BigDecimal rendimento = conta.getSaldo().multiply(taxaMensal);
         rendimento = rendimento.setScale(2, RoundingMode.HALF_UP);
+
+        conta.setRendimento(rendimento);
+        conta.setSaldo(conta.getSaldo().add(rendimento));
 
         conta.setSaldo(conta.getSaldo().add(rendimento));
         contaRepository.save(conta);

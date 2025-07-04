@@ -43,7 +43,7 @@ public record CartaoDetalhesDTO(
                 cartao.getLimitePreAprovado(),
                 cartao.getLimitePreAprovado().subtract(cartao.getFaturaAtual()),
                 cartao.getFaturaAtual(),
-                cartao.getDataVencimento(),
+                cartao.getDataProximoVencimento(),
                 cartao.getContaCorrente().getId()
         );
     }

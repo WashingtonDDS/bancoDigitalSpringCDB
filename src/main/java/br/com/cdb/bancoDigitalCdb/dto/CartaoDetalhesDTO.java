@@ -13,6 +13,7 @@ public record CartaoDetalhesDTO(
         boolean ativo,
         BigDecimal limiteDiario,
         BigDecimal limiteCredito,
+        BigDecimal limiteDisponivel,
         BigDecimal faturaAtual,
         LocalDate dataVencimento,
         String contaId
@@ -24,6 +25,7 @@ public record CartaoDetalhesDTO(
                 TipoCartao.DEBITO,
                 cartao.isAtivoOuDesativo(),
                 cartao.getLimiteDiarioTransacao(),
+                null,
                 null,
                 null,
                 null,
@@ -39,6 +41,7 @@ public record CartaoDetalhesDTO(
                 cartao.isAtivoOuDesativo(),
                 null,
                 cartao.getLimitePreAprovado(),
+                cartao.getLimitePreAprovado().subtract(cartao.getFaturaAtual()),
                 cartao.getFaturaAtual(),
                 cartao.getDataVencimento(),
                 cartao.getContaCorrente().getId()

@@ -26,6 +26,10 @@ public class CartaoDeDebito {
     @JoinColumn(name = "cliente_id")
     private Cliente cliente;
 
+    @Column(name = "data_validade")
+    private LocalDate dataValidade;
+
+
     @Column(unique = true, length = 16)
     private String numero;
 

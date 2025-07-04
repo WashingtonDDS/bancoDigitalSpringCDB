@@ -45,8 +45,17 @@ public class CartaoService {
             CartaoDeDebito cartao = new CartaoDeDebito();
             cartao.setNumero(gerarNumeroCartao());
             cartao.setSenha(passwordEncoder.encode(validarSenhaCartao(request.senha())));
-            cartao.setLimiteDiarioTransacao(request.limiteDiario());
+
+            BigDecimal limiteDiario = calcularLimiteDiarioCliente(conta.getCliente());
+            cartao.setDataValidade(LocalDate.now().plusYears(3));
+
+            cartao.setLimiteDiarioTransacao(limiteDiario);
             cartao.setConta(conta);
+
+            cartao.setCliente(conta.getCliente());
+            cartao.setAtivoOuDesativo(true);
+
+
             cartaoDebitoRepository.save(cartao);
             return new CartaoResponseDTO(cartao);
         } else {
@@ -67,9 +76,17 @@ public class CartaoService {
             cartao.setLimitePreAprovado(limiteCredito);
             cartao.setFaturaAtual(BigDecimal.ZERO);
 
-            cartao.setDataVencimento(LocalDate.now().plusYears(3));
+            cartao.setDataValidade(LocalDate.now().plusYears(3));
+            cartao.setDiaVencimentoFatura(1);
+            LocalDate proximoMes = LocalDate.now().plusMonths(1);
+            cartao.setDataProximoVencimento(
+                    LocalDate.of(proximoMes.getYear(), proximoMes.getMonth(), cartao.getDiaVencimentoFatura())
+            );
+
             cartao.setContaCorrente(contaCorrente);
             cartao.setCliente(cliente);
+
+            cartao.setAtivoOuDesativo(true);
 
             cartaoCreditoRepository.save(cartao);
             criarSeguroFraudeAutomatico(cartao);
@@ -81,6 +98,13 @@ public class CartaoService {
 
             return new CartaoResponseDTO(cartao);
         }
+    }
+    public void atualizarDataVencimentoFatura(CartaoDeCredito cartao) {
+        LocalDate proximoMes = LocalDate.now().plusMonths(1);
+        cartao.setDataProximoVencimento(
+                LocalDate.of(proximoMes.getYear(), proximoMes.getMonth(), cartao.getDiaVencimentoFatura())
+        );
+        cartaoCreditoRepository.save(cartao);
     }
     private void criarSeguroFraudeAutomatico(CartaoDeCredito cartao) {
         Seguro seguro = Seguro.builder()
@@ -101,6 +125,14 @@ public class CartaoService {
             default -> throw new TipoInvalidoException("Tipo de cliente inválido");
         };
     }
+    private BigDecimal calcularLimiteDiarioCliente(Cliente cliente){
+        return switch (cliente.getTipoCliente()) {
+            case COMUM -> new BigDecimal(1000);
+            case SUPER -> new BigDecimal(2000);
+            case PREMIUM -> new BigDecimal(5000);
+            default -> throw new TipoInvalidoException("Tipo de cliente inválido");
+        };
+    }
 
     private String validarSenhaCartao(String senha) {
         if (senha == null || !senha.matches("\\d{4}")) {
@@ -117,6 +149,9 @@ public class CartaoService {
         }
         return sb.toString();
     }
+    private BigDecimal calcularLimiteDisponivel(CartaoDeCredito cartao) {
+        return cartao.getLimitePreAprovado().subtract(cartao.getFaturaAtual());
+    }
 
     @Transactional
     public CartaoDetalhesDTO detalhaCartao(String cartaoId){
@@ -127,12 +162,13 @@ public class CartaoService {
         } else {
             CartaoDeCredito cartao = cartaoCreditoRepository.findById(cartaoId)
                     .orElseThrow(() -> new CartaoNaoEncontradaException("Cartão de crédito não encontrado"));
+
             return CartaoDetalhesDTO.Credito(cartao);
         }
     }
 
     @Transactional
-    public void realizarPagamentoComCartao(String cartaoId, PagamentoCartaoRequestDTO request){
+    public PagamentoCartaoResponseDTO realizarPagamentoComCartao(String cartaoId, PagamentoCartaoRequestDTO request){
         if (cartaoId.startsWith("CD")){
             CartaoDeDebito cartao = cartaoDebitoRepository.findById(cartaoId)
                     .orElseThrow(()-> new CartaoNaoEncontradaException("Cartão de débito não encontrado"));
@@ -163,13 +199,19 @@ public class CartaoService {
 
             conta.setSaldo(conta.getSaldo().subtract(request.valor()));
             contaRepository.save(conta);
+            return new PagamentoCartaoResponseDTO(
+                    "Pagamento com cartão de débito realizado",
+                    request.valor(),
+                    null,
+                    null
+            );
         } else {
             CartaoDeCredito cartao = cartaoCreditoRepository.findById(cartaoId)
                     .orElseThrow(() -> new CartaoNaoEncontradaException("Cartão não encontrado"));
             if (!passwordEncoder.matches(request.senha(), cartao.getSenha())){
                 throw new SenhaIncorretaException("Senha incorreta");
             }
-            BigDecimal limiteDisponivel = cartao.getLimitePreAprovado().subtract(cartao.getFaturaAtual());
+            BigDecimal limiteDisponivel = calcularLimiteDisponivel(cartao);
 
             if (cartao.getFaturaAtual().compareTo(cartao.getLimitePreAprovado()) > 0) {
                 throw new LimiteExcedidoException("Fatura excedeu o limite do cartão");
@@ -181,62 +223,72 @@ public class CartaoService {
 
             cartao.setFaturaAtual(cartao.getFaturaAtual().add(request.valor()));
             cartaoCreditoRepository.save(cartao);
+            return new PagamentoCartaoResponseDTO(
+                    "Pagamento com cartão de crédito realizado",
+                    request.valor(),
+                    cartao.getLimitePreAprovado(),
+                    calcularLimiteDisponivel(cartao)
+            );
         }
     }
 
     @Transactional
-    public void pagarFatura(String cartaoId, PagamentoFaturaRequestDTO request){
+    public void pagarFatura(String cartaoId, PagamentoFaturaRequestDTO request) {
         CartaoDeCredito cartao = cartaoCreditoRepository.findById(cartaoId)
-                .orElseThrow(()-> new CartaoNaoEncontradaException("Cartão de credito não encontrado"));
+                .orElseThrow(() -> new CartaoNaoEncontradaException("Cartão de crédito não encontrado"));
 
         Conta conta = contaRepository.findById(request.contaId())
                 .orElseThrow(() -> new ContaNaoEncontradaException("Conta não encontrada"));
 
-        BigDecimal valorPagamento = request.valor();
-        BigDecimal faturaAtual = cartao.getFaturaAtual();
-        BigDecimal limiteCredito = cartao.getLimitePreAprovado();
+        BigDecimal valorTransacoes = cartao.getFaturaAtual();
+        BigDecimal valorTotal = valorTransacoes;
+        BigDecimal taxaUtilizacao = BigDecimal.ZERO;
 
-        BigDecimal taxaAplicada = BigDecimal.ZERO;
-
-        if (aplicarTaxaUtilizacao(faturaAtual,limiteCredito)){
-            taxaAplicada = calcularTaxaUtilizacao(faturaAtual);
-            faturaAtual = faturaAtual.add(taxaAplicada);
-            cartao.setFaturaAtual(faturaAtual);
+        if (aplicarTaxaUtilizacao(valorTransacoes, cartao.getLimitePreAprovado())) {
+            taxaUtilizacao = calcularTaxaUtilizacao(valorTransacoes);
+            valorTotal = valorTotal.add(taxaUtilizacao);
         }
 
-        if (valorPagamento.compareTo(faturaAtual) > 0) {
+        BigDecimal valorSeguros = seguroRepository.findByCartaoIdAndDataCancelamentoIsNull(cartaoId).stream()
+                .filter(s -> s.getTipo() == TipoSeguro.VIAGEM)
+                .map(Seguro::getValorMensal)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        valorTotal = valorTotal.add(valorSeguros);
+
+
+        if (request.valor().compareTo(valorTotal) > 0) {
             throw new PagamentoFaturaException("Valor do pagamento não pode ser maior que o total da fatura");
         }
 
-        if (conta.getSaldo().compareTo(valorPagamento) < 0){
+        if (conta.getSaldo().compareTo(request.valor()) < 0) {
             throw new SaldoInsuficienteException("Saldo insuficiente para pagar a fatura");
         }
 
-        conta .setSaldo(conta.getSaldo().subtract(valorPagamento));
-
-        BigDecimal novaFatura = faturaAtual.subtract(valorPagamento);
+        conta.setSaldo(conta.getSaldo().subtract(request.valor()));
+        BigDecimal novaFatura = valorTransacoes.subtract(request.valor());
         cartao.setFaturaAtual(novaFatura);
-
-        contaRepository.save(conta);
-        cartaoCreditoRepository.save(cartao);
 
         Fatura fatura = new Fatura();
         fatura.setCartao(cartao);
-        fatura.setValorPago(valorPagamento);
+        fatura.setValorPago(request.valor());
         fatura.setDataPagamento(LocalDate.now());
-        fatura.setTotalTaxas(taxaAplicada);
+        fatura.setTotalTaxas(taxaUtilizacao.add(valorSeguros));
 
+        contaRepository.save(conta);
+        cartaoCreditoRepository.save(cartao);
         faturaRepository.save(fatura);
     }
+
 
     private boolean aplicarTaxaUtilizacao(BigDecimal faturaAtual, BigDecimal limiteCredito) {
         BigDecimal limite80 = limiteCredito.multiply(BigDecimal.valueOf(0.8));
         return faturaAtual.compareTo(limite80) > 0;
     }
+
     private BigDecimal calcularTaxaUtilizacao(BigDecimal faturaAtual) {
         return faturaAtual.multiply(BigDecimal.valueOf(0.05));
     }
-
     @Transactional
     public void alterarLimiteDiario(String cartaoId, AlterarLimiteRequestDTO request){
         CartaoDeDebito cartao = cartaoDebitoRepository.findById(cartaoId)
@@ -307,31 +359,81 @@ public class CartaoService {
         }
     }
 
-    @Transactional
+
+    @Transactional(readOnly = true)
     public FaturaResponseDTO consultarFatura(String cartaoId) {
         CartaoDeCredito cartao = cartaoCreditoRepository.findById(cartaoId)
                 .orElseThrow(() -> new CartaoNaoEncontradaException("Cartão de crédito não encontrado"));
 
-        List<PagamentoFaturaDTO> historico = new ArrayList<>();
+        BigDecimal valorTransacoes = cartao.getFaturaAtual();
+        BigDecimal valorTotal = valorTransacoes;
 
-        if (cartao.getFaturas() != null){
-            historico = cartao.getFaturas().stream()
-                    .map(fatura -> new PagamentoFaturaDTO(
-                            fatura.getValorPago(),
-                            fatura.getDataPagamento(),
-                            fatura.getCartao().getNumero()
-                    ))
-                    .collect(Collectors.toList());
+        BigDecimal taxaUtilizacao = BigDecimal.ZERO;
+        if (aplicarTaxaUtilizacao(valorTransacoes, cartao.getLimitePreAprovado())) {
+            taxaUtilizacao = calcularTaxaUtilizacao(valorTransacoes);
+            valorTotal = valorTotal.add(taxaUtilizacao);
         }
 
-        return new FaturaResponseDTO(
-                cartao.getFaturaAtual(),
-                cartao.getDataVencimento(),
-                cartao.getLimitePreAprovado(),
-                historico
-                );
-    }
+        BigDecimal valorSeguros = seguroRepository.findByCartaoIdAndDataCancelamentoIsNull(cartaoId).stream()
+                .filter(s -> s.getTipo() == TipoSeguro.VIAGEM)
+                .map(Seguro::getValorMensal)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
+        valorTotal = valorTotal.add(valorSeguros);
+
+        List<Fatura> faturasPagas = faturaRepository.findByCartaoId(cartaoId);
+        List<PagamentoFaturaDTO> historico = faturasPagas.stream()
+                .map(f -> new PagamentoFaturaDTO(
+                        f.getValorPago(),
+                        f.getDataPagamento()
+                ))
+                .collect(Collectors.toList());
+
+        return new FaturaResponseDTO(
+                valorTotal,
+                cartao.getDataProximoVencimento(),
+                cartao.getLimitePreAprovado(),
+                calcularLimiteDisponivel(cartao),
+                historico,
+                taxaUtilizacao,
+                valorSeguros
+        );
+    }
+    @Transactional
+    public void cancelarCartao(String cartaoId) {
+        if (cartaoId.startsWith("CD")) {
+            CartaoDeDebito cartao = cartaoDebitoRepository.findById(cartaoId)
+                    .orElseThrow(() -> new CartaoNaoEncontradaException("Cartão de débito não encontrado"));
+
+            if (!cartao.isAtivoOuDesativo()) {
+                throw new BusinessException("Cartão já está cancelado");
+            }
+
+            cartao.setAtivoOuDesativo(false);
+            cartaoDebitoRepository.save(cartao);
+        } else {
+            CartaoDeCredito cartao = cartaoCreditoRepository.findById(cartaoId)
+                    .orElseThrow(() -> new CartaoNaoEncontradaException("Cartão de crédito não encontrado"));
+
+            if (!cartao.isAtivoOuDesativo()) {
+                throw new BusinessException("Cartão já está cancelado");
+            }
+
+            if (cartao.getFaturaAtual().compareTo(BigDecimal.ZERO) > 0) {
+                throw new BusinessException("Não é possível cancelar o cartão com fatura pendente");
+            }
+
+            List<Seguro> segurosAtivos = seguroRepository.findByCartaoIdAndDataCancelamentoIsNull(cartaoId);
+            LocalDate hoje = LocalDate.now();
+            for (Seguro seguro : segurosAtivos) {
+                seguro.setDataCancelamento(hoje);
+                seguroRepository.save(seguro);
+            }
+
+            cartao.setAtivoOuDesativo(false);
+            cartaoCreditoRepository.save(cartao);
+        }
+    }
 
 
 

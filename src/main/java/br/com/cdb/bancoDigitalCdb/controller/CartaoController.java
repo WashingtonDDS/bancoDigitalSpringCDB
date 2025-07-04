@@ -31,9 +31,12 @@ public class CartaoController {
     }
 
     @PostMapping("/{id}/pagamento")
-    public ResponseEntity<Void>realizarPagamentoComCartao(@PathVariable String id, @RequestBody PagamentoCartaoRequestDTO request){
-        cartaoService.realizarPagamentoComCartao(id,request);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<PagamentoCartaoResponseDTO> realizarPagamentoComCartao(
+            @PathVariable String id,
+            @RequestBody PagamentoCartaoRequestDTO request) {
+
+        PagamentoCartaoResponseDTO response = cartaoService.realizarPagamentoComCartao(id, request);
+        return ResponseEntity.ok(response);
     }
 
     @PutMapping("/{id}/limite")

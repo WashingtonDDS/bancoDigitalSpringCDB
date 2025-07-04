@@ -4,8 +4,12 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
-public record FaturaResponseDTO(BigDecimal valorAtual,
-                                LocalDate dataVencimento,
-                                BigDecimal limiteTotal,
- List<PagamentoFaturaDTO>historico) {
-}
+public record FaturaResponseDTO(
+        BigDecimal valorTotal,
+        LocalDate dataVencimento,
+        BigDecimal limiteTotal,
+        BigDecimal limiteDisponivel,
+        List<PagamentoFaturaDTO> historicoPagamentos,
+        BigDecimal valorTaxas,
+        BigDecimal valorSeguros
+) {}

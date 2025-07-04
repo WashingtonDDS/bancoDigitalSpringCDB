@@ -6,6 +6,5 @@ import java.time.LocalDate;
 
 public record PagamentoFaturaDTO(
         BigDecimal valorPago,
-        LocalDate dataPagamento,
-        String numeroContaPagamento
+        LocalDate dataPagamento
 ) {}

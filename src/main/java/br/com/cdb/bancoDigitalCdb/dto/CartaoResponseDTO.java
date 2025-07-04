@@ -12,12 +12,24 @@ public record CartaoResponseDTO(String id,
                                 TipoCartao tipo,
                                 BigDecimal limiteDiario,
                                 BigDecimal limiteCredito,
-                                LocalDate dataVencimento) {
+                                LocalDate dataValidade,
+                                Integer  diaVencimentoFatura,
+                                LocalDate proximoVencimentoFatura) {
     public CartaoResponseDTO(CartaoDeDebito cartaoDeDebito){
-        this(cartaoDeDebito.getId(), cartaoDeDebito.getNumero(), TipoCartao.DEBITO, cartaoDeDebito.getLimiteDiarioTransacao(), null, null);
-    }
+        this(
+                cartaoDeDebito.getId(),
+                cartaoDeDebito.getNumero(),
+                TipoCartao.DEBITO,
+                cartaoDeDebito.getLimiteDiarioTransacao(),
+                null,
+                cartaoDeDebito.getDataValidade(),
+                null,
+                null
+        );    }
     public CartaoResponseDTO(CartaoDeCredito cartao) {
-        this(cartao.getId(), cartao.getNumero(), TipoCartao.CREDITO, null, cartao.getLimitePreAprovado(), cartao.getDataVencimento());
+        this(cartao.getId(), cartao.getNumero(), TipoCartao.CREDITO, null, cartao.getLimitePreAprovado(),  cartao.getDataValidade(),
+                cartao.getDiaVencimentoFatura(),
+                cartao.getDataProximoVencimento());
     }
 }
 

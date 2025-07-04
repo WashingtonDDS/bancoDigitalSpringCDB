@@ -44,7 +44,16 @@ public class CartaoDeCredito {
     private String senha;
     private BigDecimal faturaAtual = BigDecimal.ZERO;;
     private BigDecimal limitePreAprovado;
-    private LocalDate dataVencimento;
+
+    @Column(name = "data_validade")
+    private LocalDate dataValidade;
+
+    @Column(name = "dia_vencimento_fatura")
+    private Integer  diaVencimentoFatura;
+
+    @Column(name = "data_proximo_vencimento")
+    private LocalDate dataProximoVencimento;
+
     private boolean ativoOuDesativo;
     private double taxaDeUtilizacao;
 
